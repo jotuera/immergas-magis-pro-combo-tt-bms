@@ -1,0 +1,1167 @@
+esphome:
+  name: immergas-tt-atom
+  friendly_name: Immergas T-T+ Atom
+  name_add_mac_suffix: false
+
+esp32:
+  board: m5stack-atom
+  framework:
+    type: esp-idf
+
+logger:
+  level: INFO
+
+api:
+
+ota:
+  - platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  manual_ip:
+    static_ip: 192.168.50.47
+    gateway: 192.168.50.1
+    subnet: 255.255.255.0
+
+  ap:
+    ssid: "Immergas T-T+ Atom Fallback"
+    password: !secret fallback_ap_password
+
+captive_portal:
+
+# Atom Lite + MAX3485 / RS485 TTL 3.3 V
+# Immergas T+ / T- -> RS485 module A/B
+# If no response or CRC errors, swap T+ and T-.
+uart:
+  id: uart_immergas_tt
+  tx_pin: GPIO26
+  rx_pin: GPIO32
+  baud_rate: 9600
+  data_bits: 8
+  parity: NONE
+  stop_bits: 1
+
+modbus:
+  id: modbus_immergas_tt
+  uart_id: uart_immergas_tt
+  flow_control_pin: GPIO25
+  send_wait_time: 150ms
+
+modbus_controller:
+  # Fast controller: control + key sensors (short queue = fast writes).
+  - id: immergas_bms
+    address: 11
+    modbus_id: modbus_immergas_tt
+    update_interval: 30s
+    command_throttle: 80ms
+
+  # Slow controller: unknown diagnostic registers (rarely change).
+  - id: immergas_bms_diag
+    address: 11
+    modbus_id: modbus_immergas_tt
+    update_interval: 300s
+    command_throttle: 80ms
+
+sensor:
+
+  # MAIN READINGS
+  # =========================================================
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - D03 Storage tank unit temperature"
+    id: immergas_d03_dhw_temperatura_zasobnika
+    register_type: holding
+    address: 3016
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - D20 System flow temperature"
+    id: immergas_d20_system_flow_temp
+    register_type: holding
+    address: 3000
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - D08 Heat pump return water temperature"
+    id: immergas_d08_system_return_temp
+    register_type: holding
+    address: 3001
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - D23 Indoor Unit return temperature"
+    id: immergas_d23_indoor_unit_return_temp
+    register_type: holding
+    address: 3029
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - D14 Circulator pump flow rate"
+    id: immergas_d14_pump_flow_rate
+    register_type: holding
+    address: 3054
+    value_type: U_WORD
+    unit_of_measurement: "l/h"
+    state_class: measurement
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - D24 Chiller circuit liquid temperature"
+    id: immergas_d24_refrigerant_liquid_phase_temp
+    register_type: holding
+    address: 3056
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  # =========================================================
+  # RAW / DIAGNOSTICS
+  # =========================================================
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - Operating mode RAW"
+    id: immergas_tryb_pracy_raw
+    internal: true
+    register_type: holding
+    address: 2000
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - D97 Heat pump demand status RAW (cand.)"
+    id: immergas_status_pompy_ciepla_raw
+    register_type: holding
+    address: 6500
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - D98 Thermal generator demand status RAW (cand.)"
+    id: immergas_status_boilera_raw
+    register_type: holding
+    address: 6501
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - D99 System state RAW"
+    id: immergas_system_state_raw
+    register_type: holding
+    address: 6502
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  # Found by T-/T+ scan 2000-2999.
+  # Read individually - force_new_range prevents grouping with unavailable 2101.
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - Boiler fault (code)"
+    id: immergas_pdu_2100
+    register_type: holding
+    address: 2100
+    value_type: U_WORD
+    force_new_range: true
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - A11 Outdoor Unit model"
+    id: immergas_a11_outdoor_unit_model
+    register_type: holding
+    address: 4202
+    value_type: U_WORD
+    unit_of_measurement: "kW"
+    accuracy_decimals: 0
+
+  # =========================================================
+  # IMMERGAS T-/T+ — additional PDU / diagnostics
+  # =========================================================
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 512"
+    id: immergas_pdu_512
+    register_type: holding
+    address: 512
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  # D06 OAT - correct address from table: 3002
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - D06 Outdoor temperature"
+    id: immergas_d06_oat
+    register_type: holding
+    address: 3002
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  # R08 Zone 2 max CO (rej. 3003) - przywrocone jako sensor (v.k: RW). Cale °C jak R04/R05.
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - R08 Zone 2 low temperature zone maximum central heating"
+    id: immergas_r08_zone_2_max_temp_ch
+    register_type: holding
+    address: 3003
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 3027"
+    id: immergas_pdu_3027
+    register_type: holding
+    address: 3027
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 3028"
+    id: immergas_pdu_3028
+    register_type: holding
+    address: 3028
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 3061"
+    id: immergas_pdu_3061
+    register_type: holding
+    address: 3061
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 4011"
+    id: immergas_pdu_4011
+    register_type: holding
+    address: 4011
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 4201"
+    id: immergas_pdu_4201
+    register_type: holding
+    address: 4201
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 4402"
+    id: immergas_pdu_4402
+    register_type: holding
+    address: 4402
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 4403"
+    id: immergas_pdu_4403
+    register_type: holding
+    address: 4403
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 4411"
+    id: immergas_pdu_4411
+    register_type: holding
+    address: 4411
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - Refrigerant circuit 4452 (cand. temp D72-74)"
+    id: immergas_pdu_4452
+    register_type: holding
+    address: 4452
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 4455"
+    id: immergas_pdu_4455
+    register_type: holding
+    address: 4455
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 4468"
+    id: immergas_pdu_4468
+    register_type: holding
+    address: 4468
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 4469"
+    id: immergas_pdu_4469
+    register_type: holding
+    address: 4469
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 4479"
+    id: immergas_pdu_4479
+    register_type: holding
+    address: 4479
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - Refrigerant circuit 4551 (cand. temp D72-74)"
+    id: immergas_pdu_4551
+    register_type: holding
+    address: 4551
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - Refrigerant circuit 4554 (cand. temp D72-74)"
+    id: immergas_pdu_4554
+    register_type: holding
+    address: 4554
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  # EEV position
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - D77 Electronic expansion valve position"
+    id: immergas_eev_position
+    register_type: holding
+    address: 4557
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 4558"
+    id: immergas_pdu_4558
+    register_type: holding
+    address: 4558
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - Refrigerant circuit 4585 (cand. temp D72-74)"
+    id: immergas_pdu_4585
+    register_type: holding
+    address: 4585
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 4586"
+    id: immergas_pdu_4586
+    register_type: holding
+    address: 4586
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 4587"
+    id: immergas_pdu_4587
+    register_type: holding
+    address: 4587
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 4588"
+    id: immergas_pdu_4588
+    register_type: holding
+    address: 4588
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 6002"
+    id: immergas_pdu_6002
+    register_type: holding
+    address: 6002
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  # A03/A04 (pump min/max %) removed from diagnostics — available as number sliders.
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 6013"
+    id: immergas_pdu_6013
+    register_type: holding
+    address: 6013
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 6014"
+    id: immergas_pdu_6014
+    register_type: holding
+    address: 6014
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 6503"
+    id: immergas_pdu_6503
+    register_type: holding
+    address: 6503
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 6504"
+    id: immergas_pdu_6504
+    register_type: holding
+    address: 6504
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 6505"
+    id: immergas_pdu_6505
+    register_type: holding
+    address: 6505
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    id: immergas_pdu_6506
+    internal: true
+    register_type: holding
+    address: 6506
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    id: immergas_pdu_6507
+    internal: true
+    register_type: holding
+    address: 6507
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms_diag
+    name: "Immergas - PDU 6510"
+    id: immergas_pdu_6510
+    register_type: holding
+    address: 6510
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 0
+
+  # =========================================================
+  # CALCULATED SENSORS
+  # =========================================================
+
+  - platform: template
+    name: "Immergas - Delta T"
+    id: immergas_delta_t
+    icon: mdi:thermometer-lines
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(immergas_d20_system_flow_temp).state) || isnan(id(immergas_d08_system_return_temp).state)) {
+        return NAN;
+      }
+      return id(immergas_d20_system_flow_temp).state - id(immergas_d08_system_return_temp).state;
+
+  - platform: template
+    name: "Immergas - Estimated thermal power"
+    id: immergas_thermal_power
+    icon: mdi:fire
+    unit_of_measurement: "kW"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 2
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(immergas_d14_pump_flow_rate).state) || isnan(id(immergas_delta_t).state)) {
+        return NAN;
+      }
+      // P[kW] = flow [l/h] * deltaT [°C] * 1.163 / 1000
+      return (id(immergas_d14_pump_flow_rate).state * id(immergas_delta_t).state * 1.163) / 1000.0;
+
+  - platform: template
+    name: "Immergas - Mean loop temperature"
+    id: immergas_mean_loop_temp
+    icon: mdi:thermometer
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(immergas_d20_system_flow_temp).state) || isnan(id(immergas_d08_system_return_temp).state)) {
+        return NAN;
+      }
+      return (id(immergas_d20_system_flow_temp).state + id(immergas_d08_system_return_temp).state) / 2.0;
+
+  - platform: template
+    name: "Immergas - Thermal lift (flow - outdoor)"
+    id: immergas_thermal_lift
+    icon: mdi:arrow-expand-vertical
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(immergas_d20_system_flow_temp).state) || isnan(id(immergas_d06_oat).state)) {
+        return NAN;
+      }
+      return id(immergas_d20_system_flow_temp).state - id(immergas_d06_oat).state;
+
+  - platform: template
+    name: "Immergas - Separator delta (system return - indoor unit)"
+    id: immergas_separator_delta
+    icon: mdi:call-split
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(immergas_d08_system_return_temp).state) || isnan(id(immergas_d23_indoor_unit_return_temp).state)) {
+        return NAN;
+      }
+      return id(immergas_d08_system_return_temp).state - id(immergas_d23_indoor_unit_return_temp).state;
+
+text_sensor:
+
+  - platform: template
+    name: "Immergas - Boiler fault (description)"
+    id: immergas_error_text
+    icon: mdi:alert-circle-outline
+    update_interval: 30s
+    lambda: |-
+      int c = isnan(id(immergas_pdu_2100).state) ? 0 : (int) id(immergas_pdu_2100).state;
+      if (c == 0) return std::string("No faults");
+      std::string t;
+      switch (c) {
+        case 0: t = "SYSTEM OK. Correctly working system -> No action required"; break;
+        case 1: t = "No ignition block. Failure to detect the flame at the end of the last attempt at ignition -> Press the Reset button"; break;
+        case 2: t = "Safety thermostat block (over-temperature). The safety thermostat has intervened -> Press the Reset button"; break;
+        case 3: t = "Flue safety thermostat block. The flue safety thermostat has intervened -> Press the Reset button (Nike versions)/ Correctly configure the P.14 parameter. Press the Reset button if required (Star versions)"; break;
+        case 4: t = "Contacts resistance block. Detected an abnormality in the driving circuit of the gas valve -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 5: t = "Flow probe anomaly. The flow sensor provides a resistive value out of range -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 6: t = "Domestic hot water probe anomaly. The Domestic hot water sensor provides a resistive value out of range -> In this case the boiler continues to produce domestic hot water but not with optimal performance. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 8: t = "Maximum N° of reset. Indicates the maximum number of reset allowed by integrated P.C.B. -> Attention: the anomaly can be reset 5 times consecutively, after which the function in inhibited for at least one hour. One attempt is gained every hour for a maximum of 5 attempts. By switching the appliance on and off again, the 5 attempts are re-acquired."; break;
+        case 10: t = "Insufficient system pressure. The pressure switch contact is open -> Check on the boiler pressure gauge that the system pressure is between 1-1.2 bar and restore the correct pressure if necessary."; break;
+        case 11: t = "Flue pressure switch anomaly. This occurs in case of a fault in the flue pressure switch or the fan. -> If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)"; break;
+        case 12: t = "Storage tank probe anomaly. The domestic hot water tank sensor provides a resistive value out of range -> The boiler does not satisfy the DHW production requests. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 13: t = "Air/flue gas flow-meter out of range. The air/flue gas signal is out of range or with fan stopped, the controller reads an excessively high signal -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 15: t = "Configuration error. The P.C.B. finds a mismatch between the configuration and the input signals -> If normal conditions are restored the boiler restarts without having to be reset. Check that the boiler is configured correctly. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 16: t = "Fan anomaly. The fan is rotated when it is not powered or is stationary when powered -> Press the Reset button. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 17: t = "Incorrect fan speed. The number of fan revolutions is out of the correct range -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 20: t = "Parasite flame block. Flame detection abnormal -> Press the Reset button. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 23: t = "Return probe anomaly. The return sensor provides a resistive value out of range -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 24: t = "Push button control panel anomaly. It is detected a continuous pressure on the dashboard buttons -> If normal conditions are restored the boiler restarts without having to be reset. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 25: t = "Flue probe block / CRC block (TERA). Flue gas temperature out of range / memory corrupted (TERA) -> Press the Reset button"; break;
+        case 27: t = "Insufficient circulation. Overheating of the boiler due to poor circulation in the primary circuit -> Press the Reset button"; break;
+        case 28: t = "Domestic hot water leakage. If during the heating stage, a rise in domestic hot water temperature occurs, an anomaly is signalled and heating temperature is reduced to limit the formation of limescale in the heat exchanger. -> If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)"; break;
+        case 29: t = "Flue probe anomaly. The flue sensor provides a resistive value out of range -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 31: t = "Loss of communication with the CARV2. There is no communication between the boiler and remote. -> Power cycle the boiler. If the Remote Control is still not detected on re-starting the boiler will switch to local operating mode, i.e. using the controls on the control panel. In this case the ''Central Heating'' mode cannot be activated."; break;
+        case 32: t = "Zone 2 low temperature probe anomaly. Zone 2 flow probe out of range -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 33: t = "Zone 3 low temperature probe anomaly. Zone 3 flow probe out of range -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 36: t = "IMG Bus communication loss. Loss of communication on the IMG Bus protocol. -> The boiler does not satisfy the room heating requests."; break;
+        case 37: t = "Low power supply voltage. The P.C.B. supply voltage has values below the allowed limits. -> If normal conditions are restored the boiler restarts without having to be reset."; break;
+        case 38: t = "Loss of flame signal. The P.C.B., after detecting a correct flame current value, signaling a drop in flame current. -> If normal conditions are restored the boiler restarts without having to be reset."; break;
+        case 39: t = "Solar collector probe anomaly. The external probe has an out of range resistive value -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 40: t = "Solar storage tank probe anomaly. The solar storage tank has an out of range resistive value -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 41: t = "High temperature on the solar collector. The solar collector has exceeded the maximum temperature set -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 42: t = "High temperature on the solar storage tank. The solar storage tank has exceeded the maximum temperature set -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 43: t = "Block due to loss of flame signal. Loss of flame signal during operation in regimen for more consecutive times. -> Press the Reset button, before restarting, the boiler will run a post-ventilation cycle."; break;
+        case 44: t = "Block for exceeding the maximum accumulated time, close gas valve opening. The accumulation of the total time of the gas valve opened without flame detection is greater than the maximum allowed. -> Press the Reset button."; break;
+        case 45: t = "dT high. The temperature difference measured between flow and return is ≥ 40 ° C. -> The power of the burner is limited to prevent damage to the condensation module and once the right dT is restored, the boiler resumes regular operation. Make sure there is water circulating in the boiler, that the pump is configured according to system requirements and that the return probe works properly."; break;
+        case 46: t = "Low temperature thermostat intervention / Incorrect wiring/board configuration. The safety thermostat on the boiler flow connection to DIM v2 (operating only at Low Temperature) has reached high temperatures. / Wiring error or use of incorrect spare board -> In this case, after cooling down, it is possible to reset the thermostat (see relative instruction sheet). / If the blockage or anomaly persists it is necessary to call an authorised company (e.g. Immergas Technical Assistance Service)."; break;
+        case 47: t = "Burner power limitation. If the flue gas temperature reaches a high value the card reduces the power supplied by the burner, in order to limit damage to the smoke circuit. -> If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 48: t = "System side flow probe anomaly. The system side flow probe has an out of range resistive value -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 49: t = "High temperature block on return probe. High temperature measured by the return probe -> Make sure that water circulates properly in the boiler and that the three-way valve works properly."; break;
+        case 50: t = "External probe anomaly. The external probe has an out of range resistive value -> Check the external probe connection. The system keeps working"; break;
+        case 51: t = "CAR Wireless communication failure. Absent communication between base transmitter and CARv2 RF. -> Check operation of the Wireless CAR, check the battery charge (refer to the relative instructions booklet)."; break;
+        case 54: t = "Puffer probe anomaly. The puffer probe has an out of range resistive value -> The puffer mode is disabled"; break;
+        case 55: t = "Zone 1 flow temperature probe anomaly. The zone 1 flow probe has an out of range resistive value -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 58: t = "Audax anomaly. Anomaly indication from the AUDAX heat pump connected to the system -> The heat pump does not satisfy the room heating and cooling requests; once the connections are restored, switch the system on and off again"; break;
+        case 59: t = "Main supply voltage frequency block. The P.C.B. has detected an abnormal frequency on the power supply network. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 60: t = "Anomaly pump blocked. The modulating pump is stopped. -> Try to unblock the pump as described in the relative section. If normal conditions are restored the boiler restarts without having to be reset."; break;
+        case 61: t = "Air in circulator pump. The modulating pump is stopped for air detected. -> Vent the pump and the central heating circuit. If normal conditions are restored the boiler restarts without having to be reset."; break;
+        case 62: t = "Complete calibration required. The P.C.B. not have the correct configuration of the combustion control parameters. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 63: t = "System return probe anomaly. The return probe has an out of range resistive value -> The boiler continues to operate without any integration from the external systems connected"; break;
+        case 67: t = "Solar system pressure switch anomaly. Open system pressure switch, possibly no fluid -> Check on the pressure gauge of the solar circulation unit that the pressure is at the correct value"; break;
+        case 70: t = "Return/flow probe exchange. X -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 72: t = "Fast calibration required. The P.C.B. not have the correct configuration of some combustion control parameters. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 73: t = "High flow probe and safety flow probe deviation detected. The delivery probes have a high variance. -> If normal conditions are restored the boiler restarts without having to be reset."; break;
+        case 74: t = "Safety flow probe anomaly. The safety flow sensor provides a resistive value out of range. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 75: t = "Return and/or flow probe malfunction. X -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 76: t = "Return and/or flow probes temperature drift. X -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 77: t = "Combustion control anomaly. Gas valve current detected out of range. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 78: t = "Combustion control anomaly. High current detected on gas valve. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 79: t = "Combustion control anomaly. Low current detected on gas valve. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 80: t = "P.C.B. malfunction block. Detected fault on gas valve electronic driver for problems on gas valve or P.C.B. -> Press the Reset button"; break;
+        case 84: t = "Combustion anomaly - power reduction in progress. Detected conditions similar to low pressure feed gas valve. -> If normal conditions are restored the boiler restarts without having to be reset"; break;
+        case 85: t = "Afterburner problem block. Potential gas valve, electrode or P.C.B. problem -> Press the Reset button. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 87: t = "Block - gas valve control. Detected fault on gas valve control. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 88: t = "Block - gas valve control. Detected fault on gas valve control. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 89: t = "Combustion signal unstable. Detected instability of combustion signal. -> The boiler keeps working."; break;
+        case 90: t = "Combustion signal beyond limit. Detected combustion signal out of bounds. -> The boiler keeps working."; break;
+        case 91: t = "Incorrect ignition block. The P.C.B. has exhausted all of its possible actions for optimum ignition burner. -> Press the Reset button"; break;
+        case 92: t = "Fan revs correction limit. The P.C.B. has reached the maximum fan speed correction. -> The boiler keeps working."; break;
+        case 93: t = "Combustion signal beyond limit. Detected combustion signal out of bounds. -> The boiler keeps working."; break;
+        case 94: t = "Combustion anomaly. Combustion problem detected caused by the system or control combustion. -> If normal conditions are restored the boiler restarts without having to be reset."; break;
+        case 95: t = "Combustion signal discontinuous. Detected discontinuities of combustion signal to problems of electrical connections or signal dispersion. -> The boiler keeps working."; break;
+        case 96: t = "Clogged flue. Detected high obstruction of the boiler assembly. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+        case 98: t = "Block - maximum no. of software errors. The P.C.B. is not working properly. -> Press the Reset button"; break;
+        case 99: t = "General block. The P.C.B. is not working properly. -> Press the Reset button"; break;
+        case 101: t = "Audax off-line alarm. Loss of communication with heat pump -> The heat pump does not satisfy the room heating and cooling requests; once the connections are restored, switch the system on and off again"; break;
+        case 102: t = "Zone 1 off-line expansion alarm. Loss of communication with zone 1 expansion -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 103: t = "Zone 2 off-line expansion alarm. Loss of communication with zone 2 expansion -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 104: t = "Zone 3 off-line expansion alarm. Loss of communication with zone 3 expansion -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 106: t = "DHW probe alarm. In the event of boiler integration and separate DHW management, the storage tank probe controlled by the operator has an out of range resistive value -> The system cannot produce domestic hot water with the heat pump. The production of the domestic hot water is guaranteed by the boiler"; break;
+        case 120: t = "Zone 1 dehumidification high set alarm. The zone 1 request setpoint calculated is too high for dehumidification -> The calculated flow set exceeds the limit permitted by the dehumidifier. Cool the room and wait until the dew temperature returns to acceptable values"; break;
+        case 121: t = "Zone 1 device offline alarm. The remote control or the remote control of zone 1 is offline -> Check that the remote control is switched on"; break;
+        case 122: t = "Zone 2 device offline alarm. The remote control or the remote control of zone 2 is offline -> Check that the remote control is switched on"; break;
+        case 123: t = "Zone 3 device offline alarm. The remote control or the remote control of zone 3 is offline -> Check that the remote control is switched on"; break;
+        case 125: t = "Zone 1 room temperature probe anomaly. The room temperature probe of zone 1 is out of range -> In addition to the temperature, the dew point is not calculated for the zone either"; break;
+        case 126: t = "Zone 2 room temperature probe anomaly. The room temperature probe of zone 2 is out of range -> In addition to the temperature, the dew point is not calculated for the zone either"; break;
+        case 127: t = "Zone 3 room temperature probe anomaly. The room temperature probe of zone 3 is out of range -> In addition to the temperature, the dew point is not calculated for the zone either"; break;
+        case 129: t = "Zone 1 humidity probe anomaly. The humidity probe of zone 1 is out of range -> In addition to the humidity, the dew point is not calculated for the zone either"; break;
+        case 130: t = "Zone 2 humidity probe anomaly. The humidity probe of zone 2 is out of range -> In addition to the humidity, the dew point is not calculated for the zone either"; break;
+        case 131: t = "Zone 3 humidity probe anomaly. The humidity probe of zone 3 is out of range -> In addition to the humidity, the dew point is not calculated for the zone either"; break;
+        case 132: t = "Zone 2 dehumidification high set alarm. The zone 2 request setpoint calculated is too high for dehumidification -> The calculated flow set exceeds the limit permitted by the dehumidifier. Cool the room and wait until the dew temperature returns to acceptable values"; break;
+        case 133: t = "Zone 1 dehumidifier fault alarm. The dehumidifier in zone 1 is in alarm conditions -> The system does not dehumidify in the relative zone"; break;
+        case 134: t = "Zone 2 dehumidifier fault alarm. The dehumidifier in zone 2 is in alarm conditions -> The system does not dehumidify in the relative zone"; break;
+        case 135: t = "Zone 3 dehumidifier fault alarm. The dehumidifier in zone 3 is in alarm conditions -> The system does not dehumidify in the relative zone"; break;
+        case 137: t = "Reset system alarm – Restart the system. After a reset operation, which is performed via the control panel, an alarm is signalled because a system restart is required -> Turn the system off and on"; break;
+        case 138: t = "Screed heater in progress. Screed heater function in progress"; break;
+        case 139: t = "Deaeration in progress. Deaeration function in progress"; break;
+        case 177: t = "DHW maximum time alarm. The DHW request was made exceeding a preset maximum time -> The system continues to operate with non-optimal performance"; break;
+        case 178: t = "Anti-legionella cycle not successful. The anti-legionella cycle was not completed successfully within a preset time -> Press the Reset button"; break;
+        case 179: t = "Liquid probe anomaly. The liquid phase probe is out of range. -> The system does not start. Call an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 181: t = "Remote Control communication failure zone 2. There is no dialogue between the board and the remote control in zone 2. -> Disconnect and reconnect the power to the hydronic module. If the Remote Control is still not detected at restart, the system will switch to local operating mode, i.e. using the controls on the control panel. In this case the “Central Heating”, function cannot be activated"; break;
+        case 182: t = "Condensing unit alarm. An alarm is triggered on the condensing unit -> The system does not work, see the anomaly on the condensing unit and its instructions booklet"; break;
+        case 183: t = "Condensing unit alarm in test mode. The condensing unit is in TEST MODE -> During this time, room heating/air conditioning and domestic hot water production requirements cannot be met"; break;
+        case 184: t = "Communication with outdoor unit timeout alarm. Loss of communication with condensing unit -> Have the electrical connection between the units checked"; break;
+        case 185: t = "Safety module communication alarm. Loss of communication with safety module -> Have the electrical connection between the components checked"; break;
+        case 186: t = "Igniter high voltage anomaly. Safety module: there is an igniter voltage anomaly -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 187: t = "Condensing unit return probe alarm. The condensing unit return probe is out of range -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 188: t = "Request out of operating range. The request made is not performed because the outdoor conditions do not enable the activation of the condensing unit -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 189: t = "Communication with communication board timeout alarm. Loss of communication with condensing unit communication board -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 191: t = "RF communication failure towards CAR v2 RF zone 2. The communication between the transmitter base and the CAR v2 RF of zone 2 has failed -> Check operation of the Wireless CAR, check the battery charge (refer to the relative instructions booklet)"; break;
+        case 192: t = "Condensing unit flow probe anomaly. The condensing unit flow probe is out of range -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+        case 193: t = "Appliance in Test mode. The appliance is controlled by an external device via the Opentherm protocol -> The system continues operating properly"; break;
+        case 194: t = "Audax Pro disabled. The Audax Pro condensing unit has been disabled -> The system continues operating properly"; break;
+        case 195: t = "Liquid phase low temp. anomaly. The temp. of the liquid phase probe is too low -> Check that the cooling circuit is working properly"; break;
+        case 196: t = "High flow temp. block. An excessively high temperature is detected on the heat pump return circuit -> Check that the cooling circuit is working properly"; break;
+        default: t = "General unrecognised anomaly"; break;
+      }
+      char pfx[12];
+      snprintf(pfx, sizeof(pfx), "E%02d: ", c);
+      std::string s = std::string(pfx) + t;
+      if (s.size() > 250) {
+        size_t cut = s.rfind(' ', 250);
+        if (cut == std::string::npos || cut < 200) cut = 250;
+        s = s.substr(0, cut) + "...";
+      }
+      return s;
+
+  - platform: template
+    name: "Immergas - Internal clock"
+    id: immergas_zegar_wewnetrzny
+    icon: mdi:clock-outline
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(immergas_pdu_6506).state) || isnan(id(immergas_pdu_6507).state)) {
+        return {"--:--"};
+      }
+      char buf[8];
+      snprintf(buf, sizeof(buf), "%02d:%02d", (int) id(immergas_pdu_6506).state, (int) id(immergas_pdu_6507).state);
+      return {std::string(buf)};
+
+  - platform: template
+    name: "Immergas - D97 Heat pump demand status"
+    id: immergas_status_pompy_ciepla_text
+    icon: mdi:heat-pump-outline
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(immergas_status_pompy_ciepla_raw).state)) {
+        return {"Unknown"};
+      }
+      int v = (int) id(immergas_status_pompy_ciepla_raw).state;
+
+      if (v == 300) return {"Stand-by"};
+      if (v == 332) return {"Heating"};
+      if (v == 352) return {"Manual heating"};
+      if (v == 390) return {"Heating"};
+      return {std::string("Unknown RAW ") + std::to_string(v)};
+
+  - platform: template
+    name: "Immergas - D98 Thermal generator demand status"
+    id: immergas_status_boilera_text
+    icon: mdi:water-boiler
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(immergas_status_boilera_raw).state)) {
+        return {"Unknown"};
+      }
+      int v = (int) id(immergas_status_boilera_raw).state;
+
+      if (v == 200) return {"Stand-by"};
+      if (v == 215) return {"Water heating + manual pump control"};
+      if (v == 232) return {"Heating"};
+      if (v == 252) return {"Manual heating"};
+      return {std::string("Unknown RAW ") + std::to_string(v)};
+
+  - platform: template
+    name: "Immergas - D99 System state"
+    id: immergas_system_state_text
+    icon: mdi:state-machine
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(immergas_system_state_raw).state)) {
+        return {"Unknown"};
+      }
+      int v = (int) id(immergas_system_state_raw).state;
+
+      if (v == 0) return {"Stand-by"};
+      if (v == 6) return {"Heating"};
+      if (v == 8) return {"Heating - cycle"};
+      if (v == 41) return {"Off / Out"};
+      if (v == 82) return {"Stand-by"};
+      return {std::string("Code ") + std::to_string(v)};
+
+switch:
+
+  - platform: template
+    name: "Immergas - BMS connection"
+    id: bms_connection_switch
+    icon: mdi:lan-connect
+    entity_category: config
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    turn_on_action:
+      - lambda: |-
+          id(immergas_bms).start_poller();
+          id(immergas_bms_diag).start_poller();
+          ESP_LOGI("bms", "Polaczenie BMS ON - polling wznowiony");
+    turn_off_action:
+      - lambda: |-
+          id(immergas_bms).stop_poller();
+          id(immergas_bms_diag).stop_poller();
+          ESP_LOGW("bms", "Polaczenie BMS OFF - polling wstrzymany");
+
+  # Zone 1 thermostat (bit0 of reg 2010) — control. Writes to BMS, use deliberately.
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - Zone 1 thermostat enable"
+    id: immergas_zone_1_thermostat_enable
+    register_type: holding
+    address: 2010
+    bitmask: 1
+    entity_category: config
+
+  # =========================================================
+  # RW REGISTERS (from v.k's table) — EXPERIMENTAL
+  # Undocumented writable 0/1 registers. State read from BMS.
+  # WARNING: writing changes the heat pump service config - test one at a time and observe.
+  # =========================================================
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - Register 4451 (RW 0-1)"
+    id: immergas_sw_4451
+    register_type: holding
+    address: 4451
+    bitmask: 1
+    entity_category: config
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - Register 4453 (RW 0-1)"
+    id: immergas_sw_4453
+    register_type: holding
+    address: 4453
+    bitmask: 1
+    entity_category: config
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - Register 4454 (RW 0-1)"
+    id: immergas_sw_4454
+    register_type: holding
+    address: 4454
+    bitmask: 1
+    entity_category: config
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - Register 2102 (RW 0-1)"
+    id: immergas_sw_2102
+    register_type: holding
+    address: 2102
+    bitmask: 1
+    entity_category: config
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - Register 4449 (RW 0-1)"
+    id: immergas_sw_4449
+    register_type: holding
+    address: 4449
+    bitmask: 1
+    entity_category: config
+
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - Register 4600 (RW 0-1)"
+    id: immergas_sw_4600
+    register_type: holding
+    address: 4600
+    bitmask: 1
+    entity_category: config
+
+binary_sensor:
+  - platform: template
+    name: "Immergas - Fault active"
+    id: immergas_error_active
+    icon: mdi:alert
+    device_class: problem
+    lambda: |-
+      if (isnan(id(immergas_pdu_2100).state)) return false;
+      return (int) id(immergas_pdu_2100).state != 0;
+
+  - platform: template
+    name: "Immergas - Heating active"
+    id: immergas_heating_active
+    icon: mdi:radiator
+    device_class: heat
+    lambda: |-
+      if (isnan(id(immergas_tryb_pracy_raw).state)) {
+        return false;
+      }
+      return (int) id(immergas_tryb_pracy_raw).state == 3;
+
+  - platform: template
+    name: "Immergas - Cooling active"
+    id: immergas_cooling_active
+    icon: mdi:snowflake
+    device_class: cold
+    lambda: |-
+      if (isnan(id(immergas_tryb_pracy_raw).state)) {
+        return false;
+      }
+      return (int) id(immergas_tryb_pracy_raw).state == 2;
+
+  - platform: template
+    name: "Immergas - DHW active"
+    id: immergas_dhw_active
+    icon: mdi:water-boiler
+    lambda: |-
+      if (isnan(id(immergas_tryb_pracy_raw).state)) {
+        return false;
+      }
+      return (int) id(immergas_tryb_pracy_raw).state == 1;
+
+  - platform: status
+    name: "Immergas - ESPHome status"
+    entity_category: diagnostic
+
+select:
+  # Operating-mode control over the T-/T+ BMS.
+  # Register 2000 reads stably. Write with caution - test individually.
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - System operating mode"
+    id: immergas_operation_mode_select
+    address: 2000
+    value_type: U_WORD
+    optionsmap:
+      "Standby": 0
+      "Summer (DHW)": 1
+      "Cooling": 2
+      "Winter (heating + DHW)": 3
+
+number:
+  # =========================================================
+  # CONTROL — SETPOINTS / SLIDERS
+  # =========================================================
+
+  # DHW: set °C in HA; register 2095 receives x10 (e.g. 43°C -> 430).
+  # 43°C -> 430, 50°C -> 500.
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - DHW setpoint"
+    id: immergas_zadana_temperatura_cwu
+    internal: true
+    register_type: holding
+    address: 2095
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    min_value: 10
+    max_value: 55
+    step: 1
+    multiply: 10
+    mode: slider
+
+  # R05 — Zone 1 min CH temperature. Register reads stably.
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - R05 Zone 1 minimum central heating"
+    id: immergas_zone1_min_ch_set
+    register_type: holding
+    address: 4350
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    min_value: 20
+    max_value: 45
+    step: 1
+    mode: slider
+
+  # R04 — Zone 1 max CH temperature. Register reads stably.
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - R04 Zone 1 maximum central heating"
+    id: immergas_zone1_max_ch_set
+    register_type: holding
+    address: 4351
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    min_value: 25
+    max_value: 60
+    step: 1
+    mode: slider
+
+  # R13 — Zone 1 max cooling temperature. Register reads stably.
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - R13 Zone 1 maximum cooling"
+    id: immergas_zone1_max_cool_set
+    register_type: holding
+    address: 4356
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    min_value: 7
+    max_value: 25
+    step: 1
+    mode: slider
+
+  # R12 — Zone 1 min cooling temperature. Register reads stably.
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - R12 Zone 1 minimum cooling"
+    id: immergas_zone1_min_cool_set
+    register_type: holding
+    address: 4357
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    min_value: 5
+    max_value: 20
+    step: 1
+    mode: slider
+
+  # A03 — circulation pump minimum speed. Configuration parameter.
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - A03 Minimum speed"
+    id: immergas_pump_min_speed_set
+    register_type: holding
+    address: 6010
+    value_type: U_WORD
+    unit_of_measurement: "%"
+    min_value: 30
+    max_value: 100
+    step: 1
+    mode: slider
+
+  # A04 — circulation pump maximum speed. Configuration parameter.
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - A04 Maximum fixed speed"
+    id: immergas_pump_max_speed_set
+    register_type: holding
+    address: 6011
+    value_type: U_WORD
+    unit_of_measurement: "%"
+    min_value: 50
+    max_value: 100
+    step: 1
+    mode: slider
+
+  # T05 — time between ignitions. Boiler operation parameter.
+  - platform: modbus_controller
+    modbus_controller_id: immergas_bms
+    name: "Immergas - T05 Central heating ignitions timer"
+    id: immergas_t05_time_between_ignitions_set
+    register_type: holding
+    address: 6000
+    value_type: U_WORD
+    unit_of_measurement: "min"
+    min_value: 1
+    max_value: 20
+    step: 1
+    mode: slider
+
+button:
+  - platform: restart
+    name: "Restart Immergas T+T Atom"
+    entity_category: config
+
+water_heater:
+  - platform: template
+    name: "Immergas - DHW"
+    id: immergas_cwu_water_heater
+    icon: mdi:water-boiler
+
+    current_temperature: !lambda |-
+      return id(immergas_d03_dhw_temperatura_zasobnika).state;
+
+    target_temperature: !lambda |-
+      return id(immergas_zadana_temperatura_cwu).state;
+
+    mode: !lambda |-
+      return water_heater::WATER_HEATER_MODE_ECO;
+
+    is_on: !lambda |-
+      return true;
+
+    supported_modes:
+      - ECO
+
+    visual:
+      min_temperature: 10.0
+      max_temperature: 55.0
+      target_temperature_step: 1.0
+
+    optimistic: true
+
+    set_action:
+      - lambda: |-
+          float t = id(immergas_cwu_water_heater).get_target_temperature();
+          ESP_LOGI("immergas_cwu", "Nowa zadana CWU z water_heater: %.1f C", t);
+
+          auto call = id(immergas_zadana_temperatura_cwu).make_call();
+          call.set_value(t);
+          call.perform();
