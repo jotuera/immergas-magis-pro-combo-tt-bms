@@ -20,10 +20,11 @@ wifi:
   ssid: !secret wifi_ssid
   password: !secret wifi_password
 
-  manual_ip:
-    static_ip: 192.168.50.47
-    gateway: 192.168.50.1
-    subnet: 255.255.255.0
+  # Uses DHCP by default. Uncomment and adjust for a static IP:
+  # manual_ip:
+  #   static_ip: 192.168.1.50
+  #   gateway: 192.168.1.1
+  #   subnet: 255.255.255.0
 
   ap:
     ssid: "Immergas T-T+ Atom Fallback"
