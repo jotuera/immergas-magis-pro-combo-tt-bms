@@ -67,7 +67,7 @@ If you own an Immergas Magis Combo / Audax and can correlate these values with o
 ## Setup
 
 1. `cp secrets.yaml.example secrets.yaml` and fill in your WiFi.
-2. Flash `immergas_magis_combo_bms.yaml` with ESPHome.
+2. Flash `immergas-magis-combo-tt-bms.yaml` with ESPHome.
 3. Adopt in Home Assistant.
 
 ## Notes / TODO
