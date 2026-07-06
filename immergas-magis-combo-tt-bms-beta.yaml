@@ -48,6 +48,43 @@ uart:
   data_bits: 8
   parity: NONE
   stop_bits: 2   # 8N2 per Immergas manual (also reads fine on 8N1 receivers)
+  # Debug RX is used only by the PDU scanner below. During normal operation it logs nothing.
+  debug:
+    direction: BOTH
+    dummy_receiver: false
+    after:
+      timeout: 30ms
+    sequence:
+      - lambda: |-
+          if (!id(pdu_scan_active)) { return; }
+          if (direction != esphome::uart::UART_DIRECTION_RX) { return; }
+          if (bytes.size() < 5) { return; }
+          if (bytes[0] != 0x0B) { return; }
+          int reg = id(pdu_scan_last_sent);
+          char msg[160];
+          if ((bytes[1] == 0x03 || bytes[1] == 0x04) && bytes.size() >= 7 && bytes[2] == 0x02) {
+            uint16_t value = ((uint16_t) bytes[3] << 8) | bytes[4];
+            id(pdu_scan_found_count) += 1;
+            snprintf(msg, sizeof(msg), "OK reg %d = %u (F%02X)", reg, value, bytes[1]);
+            id(pdu_scan_last_result).publish_state(msg);
+            id(pdu_scan_found_sensor).publish_state(id(pdu_scan_found_count));
+            ESP_LOGI("T_PDU_SCAN", "OK reg=%d value=%u", reg, value);
+            id(pdu_scan_waiting) = false;
+            id(pdu_scan_current) = reg + 1;
+            id(pdu_scan_current_sensor).publish_state(id(pdu_scan_current));
+            return;
+          }
+          if ((bytes[1] == 0x83 || bytes[1] == 0x84) && bytes.size() >= 5) {
+            if (bytes[2] != 0x02) {
+              snprintf(msg, sizeof(msg), "EXCEPTION reg %d code %u", reg, bytes[2]);
+              id(pdu_scan_last_result).publish_state(msg);
+              ESP_LOGW("T_PDU_SCAN", "EXCEPTION reg=%d code=%u", reg, bytes[2]);
+            }
+            id(pdu_scan_waiting) = false;
+            id(pdu_scan_current) = reg + 1;
+            id(pdu_scan_current_sensor).publish_state(id(pdu_scan_current));
+            return;
+          }
 
 modbus:
   id: modbus_immergas_tt
@@ -71,6 +108,19 @@ modbus_controller:
     command_throttle: 80ms
 
 sensor:
+
+  # --- PDU scanner diagnostics (active only in scanner mode) ---
+  - platform: template
+    name: "T-/T+ PDU scanner - current register"
+    id: pdu_scan_current_sensor
+    accuracy_decimals: 0
+    entity_category: diagnostic
+
+  - platform: template
+    name: "T-/T+ PDU scanner - found count"
+    id: pdu_scan_found_sensor
+    accuracy_decimals: 0
+    entity_category: diagnostic
 
   # MAIN READINGS
   # =========================================================
@@ -725,6 +775,16 @@ sensor:
 text_sensor:
 
   - platform: template
+    name: "T-/T+ PDU scanner - status"
+    id: pdu_scan_status
+    entity_category: diagnostic
+
+  - platform: template
+    name: "T-/T+ PDU scanner - last result"
+    id: pdu_scan_last_result
+    entity_category: diagnostic
+
+  - platform: template
     name: "Immergas - Boiler fault (description)"
     id: immergas_error_text
     icon: mdi:alert-circle-outline
@@ -927,6 +987,49 @@ text_sensor:
       return {std::string("Code ") + std::to_string(v)};
 
 switch:
+
+  # --- PDU scanner controls ---
+  - platform: template
+    name: "T-/T+ PDU scanner - scanner mode"
+    id: pdu_scanner_mode_switch
+    icon: mdi:radar
+    entity_category: config
+    restore_mode: ALWAYS_OFF
+    optimistic: true
+    turn_on_action:
+      - lambda: |-
+          id(pdu_scanner_mode) = true;
+          id(pdu_scan_active) = false;
+          id(pdu_scan_waiting) = false;
+          id(immergas_bms).stop_poller();
+          id(immergas_bms_diag).stop_poller();
+          id(pdu_scan_status).publish_state("Scanner mode ON. Normal Modbus polling is paused.");
+          ESP_LOGW("T_PDU_SCAN", "SCANNER MODE ON - pollers stopped");
+    turn_off_action:
+      - lambda: |-
+          id(pdu_scanner_mode) = false;
+          id(pdu_scan_active) = false;
+          id(pdu_scan_waiting) = false;
+          id(immergas_bms).start_poller();
+          id(immergas_bms_diag).start_poller();
+          id(pdu_scan_status).publish_state("Normal mode. Modbus polling resumed.");
+          ESP_LOGI("T_PDU_SCAN", "SCANNER MODE OFF - pollers started");
+
+  - platform: template
+    name: "T-/T+ PDU scanner - Input function (0x04)"
+    id: pdu_scan_input_func_switch
+    icon: mdi:swap-horizontal
+    entity_category: config
+    restore_mode: ALWAYS_OFF
+    optimistic: true
+    turn_on_action:
+      - lambda: |-
+          id(pdu_scan_func) = 0x04;
+          id(pdu_scan_status).publish_state("Scanner function: Input Registers (0x04)");
+    turn_off_action:
+      - lambda: |-
+          id(pdu_scan_func) = 0x03;
+          id(pdu_scan_status).publish_state("Scanner function: Holding Registers (0x03)");
 
   - platform: template
     name: "Immergas - BMS connection"
@@ -1202,6 +1305,103 @@ number:
     mode: slider
 
 button:
+
+  # --- PDU scanner range buttons (enable scanner mode first) ---
+  - platform: template
+    name: "T-/T+ scan registers 0-999"
+    icon: mdi:radar
+    on_press:
+      - lambda: |-
+          id(pdu_scan_start) = 0;
+          id(pdu_scan_end) = 999;
+      - script.execute: start_pdu_scan
+
+  - platform: template
+    name: "T-/T+ scan registers 1000-1999"
+    icon: mdi:radar
+    on_press:
+      - lambda: |-
+          id(pdu_scan_start) = 1000;
+          id(pdu_scan_end) = 1999;
+      - script.execute: start_pdu_scan
+
+  - platform: template
+    name: "T-/T+ scan registers 2000-2999"
+    icon: mdi:radar
+    on_press:
+      - lambda: |-
+          id(pdu_scan_start) = 2000;
+          id(pdu_scan_end) = 2999;
+      - script.execute: start_pdu_scan
+
+  - platform: template
+    name: "T-/T+ scan registers 3000-3999"
+    icon: mdi:radar
+    on_press:
+      - lambda: |-
+          id(pdu_scan_start) = 3000;
+          id(pdu_scan_end) = 3999;
+      - script.execute: start_pdu_scan
+
+  - platform: template
+    name: "T-/T+ scan registers 4000-4999"
+    icon: mdi:radar
+    on_press:
+      - lambda: |-
+          id(pdu_scan_start) = 4000;
+          id(pdu_scan_end) = 4999;
+      - script.execute: start_pdu_scan
+
+  - platform: template
+    name: "T-/T+ scan registers 5000-5999"
+    icon: mdi:radar
+    on_press:
+      - lambda: |-
+          id(pdu_scan_start) = 5000;
+          id(pdu_scan_end) = 5999;
+      - script.execute: start_pdu_scan
+
+  - platform: template
+    name: "T-/T+ scan registers 6000-6999"
+    icon: mdi:radar
+    on_press:
+      - lambda: |-
+          id(pdu_scan_start) = 6000;
+          id(pdu_scan_end) = 6999;
+      - script.execute: start_pdu_scan
+
+  - platform: template
+    name: "T-/T+ scan registers 7000-7999"
+    icon: mdi:radar
+    on_press:
+      - lambda: |-
+          id(pdu_scan_start) = 7000;
+          id(pdu_scan_end) = 7999;
+      - script.execute: start_pdu_scan
+
+  - platform: template
+    name: "T-/T+ scan registers 8000-8999"
+    icon: mdi:radar
+    on_press:
+      - lambda: |-
+          id(pdu_scan_start) = 8000;
+          id(pdu_scan_end) = 8999;
+      - script.execute: start_pdu_scan
+
+  - platform: template
+    name: "T-/T+ scan registers 9000-9999"
+    icon: mdi:radar
+    on_press:
+      - lambda: |-
+          id(pdu_scan_start) = 9000;
+          id(pdu_scan_end) = 9999;
+      - script.execute: start_pdu_scan
+
+  - platform: template
+    name: "T-/T+ stop scan"
+    icon: mdi:stop-circle
+    on_press:
+      - script.execute: stop_pdu_scan
   - platform: restart
     name: "Restart Immergas T+T Atom"
     entity_category: config
@@ -1242,3 +1442,106 @@ water_heater:
           auto call = id(immergas_zadana_temperatura_cwu).make_call();
           call.set_value(t);
           call.perform();
+
+globals:
+  - id: pdu_scanner_mode
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: pdu_scan_active
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: pdu_scan_waiting
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: pdu_scan_start
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: pdu_scan_end
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: pdu_scan_current
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: pdu_scan_last_sent
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: pdu_scan_found_count
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: pdu_scan_sent_at_ms
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+  - id: pdu_scan_func
+    type: uint8_t
+    restore_value: no
+    initial_value: '0x03'
+
+script:
+  - id: start_pdu_scan
+    mode: restart
+    then:
+      - lambda: |-
+          if (!id(pdu_scanner_mode)) {
+            id(pdu_scan_status).publish_state("Enable 'scanner mode' first");
+            ESP_LOGW("T_PDU_SCAN", "START ignored - scanner mode OFF");
+            return;
+          }
+          id(immergas_bms).stop_poller();
+          id(immergas_bms_diag).stop_poller();
+          id(pdu_scan_active) = true;
+          id(pdu_scan_waiting) = false;
+          id(pdu_scan_current) = id(pdu_scan_start);
+          id(pdu_scan_found_count) = 0;
+          id(pdu_scan_current_sensor).publish_state(id(pdu_scan_current));
+          id(pdu_scan_found_sensor).publish_state(0);
+          char msg[120];
+          snprintf(msg, sizeof(msg), "Scanning: reg %d-%d, function 0x%02X", id(pdu_scan_start), id(pdu_scan_end), id(pdu_scan_func));
+          id(pdu_scan_status).publish_state(msg);
+          id(pdu_scan_last_result).publish_state("Waiting for first response...");
+          ESP_LOGI("T_PDU_SCAN", "START range=%d-%d", id(pdu_scan_start), id(pdu_scan_end));
+  - id: stop_pdu_scan
+    mode: restart
+    then:
+      - lambda: |-
+          id(pdu_scan_active) = false;
+          id(pdu_scan_waiting) = false;
+          id(pdu_scan_status).publish_state("Scan stopped");
+          ESP_LOGI("T_PDU_SCAN", "STOP current=%d found=%d", id(pdu_scan_current), id(pdu_scan_found_count));
+
+interval:
+  - interval: 160ms
+    then:
+      - lambda: |-
+          if (!id(pdu_scanner_mode) || !id(pdu_scan_active)) { return; }
+          if (id(pdu_scan_current) > id(pdu_scan_end)) {
+            id(pdu_scan_active) = false;
+            id(pdu_scan_waiting) = false;
+            char done[140];
+            snprintf(done, sizeof(done), "Done: reg %d-%d, found %d", id(pdu_scan_start), id(pdu_scan_end), id(pdu_scan_found_count));
+            id(pdu_scan_status).publish_state(done);
+            ESP_LOGI("T_PDU_SCAN", "DONE range=%d-%d found=%d", id(pdu_scan_start), id(pdu_scan_end), id(pdu_scan_found_count));
+            return;
+          }
+          uint32_t now = millis();
+          if (id(pdu_scan_waiting)) {
+            if ((uint32_t)(now - id(pdu_scan_sent_at_ms)) > 260) {
+              id(pdu_scan_waiting) = false;
+              id(pdu_scan_current) = id(pdu_scan_last_sent) + 1;
+              id(pdu_scan_current_sensor).publish_state(id(pdu_scan_current));
+            }
+            return;
+          }
+          int reg = id(pdu_scan_current);
+          id(pdu_scan_last_sent) = reg;
+          id(pdu_scan_sent_at_ms) = now;
+          id(pdu_scan_waiting) = true;
+          id(immergas_bms).send(id(pdu_scan_func), reg, 1);

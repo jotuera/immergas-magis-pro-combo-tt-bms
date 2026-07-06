@@ -243,7 +243,7 @@ sensor:
     filters:
       - multiply: 0.1
 
-  # R08 Zone 2 max CO (rej. 3003) - przywrocone jako sensor (v.k: RW). Cale °C jak R04/R05.
+  # R08 Zone 2 max CH (reg. 3003) - exposed as sensor (v.k: RW). Whole °C like R04/R05.
   - platform: modbus_controller
     modbus_controller_id: immergas_bms
     name: "Immergas - R08 Zone 2 low temperature zone maximum central heating"

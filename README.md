@@ -70,6 +70,8 @@ If you own an Immergas Magis Combo / Audax and can correlate these values with o
 
 If you run a multi-zone Magis Combo / Pro V2, flashing the beta and reporting which of these show plausible °C values (and whether they track your Zone 2/3 setpoints) would directly help finish the map. **Issues/PRs very welcome.** The stable config is unaffected.
 
+The beta also bundles an **active PDU scanner**. Turn on the `PDU scanner - scanner mode` switch (this pauses normal polling), then press a `scan registers N-N` button. The Atom sweeps that range with Modbus function 0x03 (or 0x04 if you flip the *Input function* switch) and logs every response as `OK reg <N> = <value>` to the ESPHome log — a full dump of which registers answer on your system. Turn the switch back off to resume normal polling. Pasting that log into an issue is the single most useful thing a multi-zone owner can share.
+
 ## Setup
 
 1. `cp secrets.yaml.example secrets.yaml` and fill in your WiFi.
