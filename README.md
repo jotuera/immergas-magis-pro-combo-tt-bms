@@ -8,7 +8,7 @@ This is a community reverse-engineering project — Immergas does not publish th
 
 - **M5Stack Atom Lite** (ESP32) + isolated **RS485** transceiver (e.g. MAX3485 / M5 Isolated RS485 Unit)
 - Wiring: Immergas **T+ / T-** → RS485 **A / B** (swap A/B if you get CRC errors)
-- Bus: **Modbus RTU, slave 11, 9600 8N2**, 2-wire
+- Bus: **Modbus RTU, slave 11, 9600 8N2**, 2-wire (the Immergas manual specifies 8N2; it also reads fine on 8N1 receivers, so either works)
 - Tested on: **Magis Combo 9 Plus V2** (Audax 9, 9 kW)
 - The Atom is the Modbus **master**; the heat pump is slave 11.
 
@@ -55,7 +55,7 @@ If a **Dominus / zone panel is active on the D+/D- bus**, it *owns* the operatin
 | 6011 | A04 | Circulation pump maximum speed | %, RW |
 | 6500 | D97? | Heat pump demand status (candidate) | 0–999 |
 | 6501 | D98? | Thermal generator demand status (candidate) | 0–999 |
-| 6502 | D99 | System state | 0–999 |
+| 6502 | D99 | System state (0/82=Stand-by, 6=Heating, 8=Heating cycle, 41=Off, **62=DHW heating**) | 0–999 |
 | 6506/6507 | D140/D141 | Internal RTC hour / minute (read-only, free-running) | h / min |
 
 ## 🔎 Unknown registers — contributions welcome!
