@@ -55,7 +55,7 @@ If a **Dominus / zone panel is active on the D+/D- bus**, it *owns* the operatin
 | 6011 | A04 | Circulation pump maximum speed | %, RW |
 | 6500 | D97? | Heat pump demand status (candidate) | 0–999 |
 | 6501 | D98? | Thermal generator demand status (candidate) | 0–999 |
-| 6502 | D99 | System state (0/82=Stand-by, 6=Heating, 8=Heating cycle, 41=Off, **62=DHW heating**) | 0–999 |
+| 6502 | D99 | System state (0/82=Standby, 6=Heating, 8=Heating cycle, 41=Off, **62=DHW heating**) | 0–999 |
 | 6506/6507 | D140/D141 | Internal RTC hour / minute (read-only, free-running) | h / min |
 
 ## 🔎 Unknown registers — contributions welcome!

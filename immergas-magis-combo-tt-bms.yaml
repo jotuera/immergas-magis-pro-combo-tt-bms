@@ -809,7 +809,7 @@ text_sensor:
       }
       int v = (int) id(immergas_status_pompy_ciepla_raw).state;
 
-      if (v == 300) return {"Stand-by"};
+      if (v == 300) return {"Standby"};
       if (v == 332) return {"Heating"};
       if (v == 352) return {"Manual heating"};
       if (v == 390) return {"Heating"};
@@ -826,7 +826,7 @@ text_sensor:
       }
       int v = (int) id(immergas_status_boilera_raw).state;
 
-      if (v == 200) return {"Stand-by"};
+      if (v == 200) return {"Standby"};
       if (v == 215) return {"Water heating + manual pump control"};
       if (v == 232) return {"Heating"};
       if (v == 252) return {"Manual heating"};
@@ -843,12 +843,12 @@ text_sensor:
       }
       int v = (int) id(immergas_system_state_raw).state;
 
-      if (v == 0) return {"Stand-by"};
+      if (v == 0) return {"Standby"};
       if (v == 6) return {"Heating"};
       if (v == 8) return {"Heating - cycle"};
       if (v == 41) return {"Off / Out"};
       if (v == 62) return {"DHW heating"};
-      if (v == 82) return {"Stand-by"};
+      if (v == 82) return {"Standby"};
       return {std::string("Code ") + std::to_string(v)};
 
 switch:
