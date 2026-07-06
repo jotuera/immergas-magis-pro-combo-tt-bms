@@ -64,10 +64,16 @@ Many registers respond but their meaning is **not yet confirmed** — exposed as
 
 If you own an Immergas Magis Combo / Audax and can correlate these values with operating states, **please open an issue or PR** — that's how we finish the map.
 
+## 🧪 Beta config — for multi-zone testers
+
+`immergas-magis-combo-tt-bms-beta.yaml` is a drop-in copy of the stable config **plus an experimental "Zone 2/3 candidates" group**: read-only probes on registers `3004`, `3005` and `4352`–`4355`. These are map gaps that stay **unavailable on a single-zone system** (expected) and are suspected to come alive on **2- or 3-zone** installs — the addresses sit right next to the confirmed Zone 2 register `R08` (3003) and in the gap between Zone 1 heating (4350/4351) and cooling (4356/4357).
+
+If you run a multi-zone Magis Combo / Pro V2, flashing the beta and reporting which of these show plausible °C values (and whether they track your Zone 2/3 setpoints) would directly help finish the map. **Issues/PRs very welcome.** The stable config is unaffected.
+
 ## Setup
 
 1. `cp secrets.yaml.example secrets.yaml` and fill in your WiFi.
-2. Flash `immergas-magis-combo-tt-bms.yaml` with ESPHome.
+2. Flash `immergas-magis-combo-tt-bms.yaml` with ESPHome (or `...-beta.yaml` if you're helping test multi-zone).
 3. Adopt in Home Assistant.
 
 ## Notes / TODO
