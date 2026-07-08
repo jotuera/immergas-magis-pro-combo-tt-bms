@@ -1,4 +1,4 @@
-# Immergas Magis Combo / Audax — Modbus BMS via ESPHome (M5 Atom)
+# Immergas Magis Pro / Combo (Audax) — Modbus BMS via ESPHome (M5 Atom)
 
 Read and control an **Immergas Magis Combo** (Audax heat pump) over the **T-/T+ (BMS) Modbus RS485** bus using an **M5Stack Atom + ESPHome**, integrated into Home Assistant.
 
@@ -9,7 +9,7 @@ This is a community reverse-engineering project — Immergas does not publish th
 - **M5Stack Atom Lite** (ESP32) + isolated **RS485** transceiver (e.g. MAX3485 / M5 Isolated RS485 Unit)
 - Wiring: Immergas **T+ / T-** → RS485 **A / B** (swap A/B if you get CRC errors)
 - Bus: **Modbus RTU, slave 11, 9600 8N2**, 2-wire (the Immergas manual specifies 8N2; it also reads fine on 8N1 receivers, so either works)
-- Tested on: **Magis Combo 9 Plus V2** (Audax 9, 9 kW)
+- Tested on: **Magis Combo 9 Plus V2** (Audax 9, 9 kW) and **Magis Pro V2** (community-confirmed)
 - The Atom is the Modbus **master**; the heat pump is slave 11.
 
 ## What it does
@@ -66,7 +66,7 @@ If you own an Immergas Magis Combo / Audax and can correlate these values with o
 
 ## 🧪 Beta config — for multi-zone testers
 
-`immergas-magis-combo-tt-bms-beta.yaml` is a drop-in copy of the stable config **plus an experimental "Zone 2/3 candidates" group**: read-only probes on registers `3004`, `3005` and `4352`–`4355`. These are map gaps that stay **unavailable on a single-zone system** (expected) and are suspected to come alive on **2- or 3-zone** installs — the addresses sit right next to the confirmed Zone 2 register `R08` (3003) and in the gap between Zone 1 heating (4350/4351) and cooling (4356/4357).
+`immergas-magis-pro-combo-tt-bms-beta.yaml` is a drop-in copy of the stable config **plus an experimental "Zone 2/3 candidates" group**: read-only probes on registers `3004`, `3005` and `4352`–`4355`. These are map gaps that stay **unavailable on a single-zone system** (expected) and are suspected to come alive on **2- or 3-zone** installs — the addresses sit right next to the confirmed Zone 2 register `R08` (3003) and in the gap between Zone 1 heating (4350/4351) and cooling (4356/4357).
 
 If you run a multi-zone Magis Combo / Pro V2, flashing the beta and reporting which of these show plausible °C values (and whether they track your Zone 2/3 setpoints) would directly help finish the map. **Issues/PRs very welcome.** The stable config is unaffected.
 
@@ -75,7 +75,7 @@ The beta also bundles an **active PDU scanner**. Turn on the `PDU scanner - scan
 ## Setup
 
 1. `cp secrets.yaml.example secrets.yaml` and fill in your WiFi.
-2. Flash `immergas-magis-combo-tt-bms.yaml` with ESPHome (or `...-beta.yaml` if you're helping test multi-zone).
+2. Flash `immergas-magis-pro-combo-tt-bms.yaml` with ESPHome (or `...-beta.yaml` if you're helping test multi-zone).
 3. Adopt in Home Assistant.
 
 ## Notes / TODO
