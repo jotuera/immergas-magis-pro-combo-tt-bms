@@ -49,6 +49,9 @@ modbus:
   uart_id: uart_immergas_tt
   flow_control_pin: GPIO25
   send_wait_time: 150ms
+  # ESPHome 2026.9+: frame spacing is set here (command_throttle on the controllers no longer has any
+  # effect). Default is 600 ms, which makes writes from HA slow - 80 ms restores the old behaviour.
+  turnaround_time: 80ms
 
 modbus_controller:
   # Fast controller: control + key sensors (short queue = fast writes).
@@ -82,7 +85,9 @@ sensor:
     state_class: measurement
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   - platform: modbus_controller
     modbus_controller_id: immergas_bms
@@ -96,7 +101,9 @@ sensor:
     state_class: measurement
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   - platform: modbus_controller
     modbus_controller_id: immergas_bms
@@ -110,12 +117,14 @@ sensor:
     state_class: measurement
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   - platform: modbus_controller
     modbus_controller_id: immergas_bms
-    name: "Immergas - D23 Indoor Unit return temperature"
-    id: immergas_d23_indoor_unit_return_temp
+    name: "Immergas - Secondary generator (boiler) flow temperature"
+    id: immergas_secondary_gen_flow_temp
     register_type: holding
     address: 3029
     value_type: S_WORD
@@ -124,7 +133,9 @@ sensor:
     state_class: measurement
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   - platform: modbus_controller
     modbus_controller_id: immergas_bms
@@ -149,7 +160,9 @@ sensor:
     state_class: measurement
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   # =========================================================
   # RAW / DIAGNOSTICS
@@ -241,19 +254,25 @@ sensor:
     state_class: measurement
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
-  # R08 Zone 2 max CH (reg. 3003) - exposed as sensor (v.k: RW). Whole °C like R04/R05.
+  # D04 (reg. 3003) - flow setpoint calculated from the heating curve, x0.1 °C; 0 = no heat demand.
+  # (Earlier versions mislabelled this as R08 zone 2.)
   - platform: modbus_controller
     modbus_controller_id: immergas_bms
-    name: "Immergas - R08 Zone 2 low temperature zone maximum central heating"
-    id: immergas_r08_zone_2_max_temp_ch
+    name: "Immergas - D04 Calculated flow setpoint"
+    id: immergas_d04_calc_flow_setpoint
     register_type: holding
     address: 3003
     value_type: U_WORD
     unit_of_measurement: "°C"
     device_class: temperature
-    accuracy_decimals: 0
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
 
   - platform: modbus_controller
     modbus_controller_id: immergas_bms_diag
@@ -266,13 +285,13 @@ sensor:
     accuracy_decimals: 0
 
   - platform: modbus_controller
-    modbus_controller_id: immergas_bms_diag
-    name: "Immergas - PDU 3028"
+    modbus_controller_id: immergas_bms
+    name: "Immergas - D22 3-way valve (1=DHW)"
     id: immergas_pdu_3028
+    icon: mdi:valve
     register_type: holding
     address: 3028
     value_type: U_WORD
-    entity_category: diagnostic
     accuracy_decimals: 0
 
   - platform: modbus_controller
@@ -341,12 +360,14 @@ sensor:
     id: immergas_pdu_4452
     register_type: holding
     address: 4452
-    value_type: U_WORD
+    value_type: S_WORD
     unit_of_measurement: "°C"
     device_class: temperature
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   - platform: modbus_controller
     modbus_controller_id: immergas_bms_diag
@@ -390,29 +411,33 @@ sensor:
 
   - platform: modbus_controller
     modbus_controller_id: immergas_bms
-    name: "Immergas - Refrigerant circuit 4551 (cand. temp D72-74)"
+    name: "Immergas - D74 Evaporator temperature"
     id: immergas_pdu_4551
     register_type: holding
     address: 4551
-    value_type: U_WORD
+    value_type: S_WORD
     unit_of_measurement: "°C"
     device_class: temperature
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   - platform: modbus_controller
     modbus_controller_id: immergas_bms
-    name: "Immergas - Refrigerant circuit 4554 (cand. temp D72-74)"
+    name: "Immergas - Refrigerant hot-side temperature (cand.)"
     id: immergas_pdu_4554
     register_type: holding
     address: 4554
-    value_type: U_WORD
+    value_type: S_WORD
     unit_of_measurement: "°C"
     device_class: temperature
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   # EEV position
   - platform: modbus_controller
@@ -425,13 +450,14 @@ sensor:
     accuracy_decimals: 0
 
   - platform: modbus_controller
-    modbus_controller_id: immergas_bms_diag
-    name: "Immergas - PDU 4558"
+    modbus_controller_id: immergas_bms
+    name: "Immergas - D71 Compressor frequency"
     id: immergas_pdu_4558
+    icon: mdi:sine-wave
     register_type: holding
     address: 4558
     value_type: U_WORD
-    entity_category: diagnostic
+    unit_of_measurement: "Hz"
     accuracy_decimals: 0
 
   - platform: modbus_controller
@@ -440,31 +466,34 @@ sensor:
     id: immergas_pdu_4585
     register_type: holding
     address: 4585
-    value_type: U_WORD
+    value_type: S_WORD
     unit_of_measurement: "°C"
     device_class: temperature
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   - platform: modbus_controller
-    modbus_controller_id: immergas_bms_diag
-    name: "Immergas - PDU 4586"
+    modbus_controller_id: immergas_bms
+    name: "Immergas - Compressor running"
     id: immergas_pdu_4586
+    icon: mdi:heat-pump
     register_type: holding
     address: 4586
     value_type: U_WORD
-    entity_category: diagnostic
     accuracy_decimals: 0
 
   - platform: modbus_controller
-    modbus_controller_id: immergas_bms_diag
-    name: "Immergas - PDU 4587"
+    modbus_controller_id: immergas_bms
+    name: "Immergas - D76 Outdoor unit fan speed (cand.)"
     id: immergas_pdu_4587
+    icon: mdi:fan
     register_type: holding
     address: 4587
     value_type: U_WORD
-    entity_category: diagnostic
+    unit_of_measurement: "rpm"
     accuracy_decimals: 0
 
   - platform: modbus_controller
@@ -633,7 +662,7 @@ sensor:
       return id(immergas_d20_system_flow_temp).state - id(immergas_d06_oat).state;
 
   - platform: template
-    name: "Immergas - Separator delta (system return - indoor unit)"
+    name: "Immergas - Difference HP return - boiler flow"
     id: immergas_separator_delta
     icon: mdi:call-split
     unit_of_measurement: "°C"
@@ -642,10 +671,10 @@ sensor:
     accuracy_decimals: 1
     update_interval: 30s
     lambda: |-
-      if (isnan(id(immergas_d08_system_return_temp).state) || isnan(id(immergas_d23_indoor_unit_return_temp).state)) {
+      if (isnan(id(immergas_d08_system_return_temp).state) || isnan(id(immergas_secondary_gen_flow_temp).state)) {
         return NAN;
       }
-      return id(immergas_d08_system_return_temp).state - id(immergas_d23_indoor_unit_return_temp).state;
+      return id(immergas_d08_system_return_temp).state - id(immergas_secondary_gen_flow_temp).state;
 
 text_sensor:
 
@@ -813,6 +842,8 @@ text_sensor:
       if (v == 332) return {"Heating"};
       if (v == 352) return {"Manual heating"};
       if (v == 390) return {"Heating"};
+      if (v == 322) return {"DHW (heat pump)"};
+      if (v == 342) return {"Cooling request"};
       return {std::string("Unknown RAW ") + std::to_string(v)};
 
   - platform: template
@@ -846,8 +877,12 @@ text_sensor:
       if (v == 0) return {"Standby"};
       if (v == 6) return {"Heating"};
       if (v == 8) return {"Heating - cycle"};
-      if (v == 41) return {"Off / Out"};
-      if (v == 62) return {"DHW heating"};
+      if (v == 1) return {"Cooling request"};
+      if (v == 41) return {"Pump overrun (end of CH)"};
+      if (v == 45) return {"End of DHW"};
+      if (v == 61) return {"DHW (solar boost)"};
+      if (v == 62) return {"DHW (gas boiler)"};
+      if (v == 64) return {"DHW (electric heater)"};
       if (v == 82) return {"Standby"};
       return {std::string("Code ") + std::to_string(v)};
 

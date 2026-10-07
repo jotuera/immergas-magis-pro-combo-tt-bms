@@ -1,7 +1,7 @@
 # =====================================================================
-# BETA build — adds experimental "Zone 2/3 candidate" registers on top
-# of the stable config. For multi-zone testers. Candidates read
-# 'unavailable' on a 1-zone system (expected). See README (Beta section).
+# BETA build - the stable config + an active PDU scanner (ESPHome 2026.9+).
+# Turn on "PDU scanner - scanner mode" (pauses normal polling), set from/to and press
+# "Scan range (from-to)" or a preset button. Every answer is logged as OK PDU <n> = <value>.
 # =====================================================================
 esphome:
   name: immergas-tt-atom
@@ -48,7 +48,7 @@ uart:
   data_bits: 8
   parity: NONE
   stop_bits: 2   # 8N2 per Immergas manual (also reads fine on 8N1 receivers)
-  # Debug RX is used only by the PDU scanner below. During normal operation it logs nothing.
+  # Debug RX - used ONLY by the PDU scanner (beta). Logs nothing during normal operation.
   debug:
     direction: BOTH
     dummy_receiver: false
@@ -65,10 +65,10 @@ uart:
           if ((bytes[1] == 0x03 || bytes[1] == 0x04) && bytes.size() >= 7 && bytes[2] == 0x02) {
             uint16_t value = ((uint16_t) bytes[3] << 8) | bytes[4];
             id(pdu_scan_found_count) += 1;
-            snprintf(msg, sizeof(msg), "OK reg %d = %u (F%02X)", reg, value, bytes[1]);
+            snprintf(msg, sizeof(msg), "OK PDU %d = %u (F%02X)", reg, value, bytes[1]);
             id(pdu_scan_last_result).publish_state(msg);
             id(pdu_scan_found_sensor).publish_state(id(pdu_scan_found_count));
-            ESP_LOGI("T_PDU_SCAN", "OK reg=%d value=%u", reg, value);
+            ESP_LOGI("T_PDU_SCAN", "OK pdu=%d value=%u", reg, value);
             id(pdu_scan_waiting) = false;
             id(pdu_scan_current) = reg + 1;
             id(pdu_scan_current_sensor).publish_state(id(pdu_scan_current));
@@ -76,9 +76,9 @@ uart:
           }
           if ((bytes[1] == 0x83 || bytes[1] == 0x84) && bytes.size() >= 5) {
             if (bytes[2] != 0x02) {
-              snprintf(msg, sizeof(msg), "EXCEPTION reg %d code %u", reg, bytes[2]);
+              snprintf(msg, sizeof(msg), "EXCEPTION PDU %d code %u", reg, bytes[2]);
               id(pdu_scan_last_result).publish_state(msg);
-              ESP_LOGW("T_PDU_SCAN", "EXCEPTION reg=%d code=%u", reg, bytes[2]);
+              ESP_LOGW("T_PDU_SCAN", "EXCEPTION pdu=%d code=%u", reg, bytes[2]);
             }
             id(pdu_scan_waiting) = false;
             id(pdu_scan_current) = reg + 1;
@@ -91,6 +91,9 @@ modbus:
   uart_id: uart_immergas_tt
   flow_control_pin: GPIO25
   send_wait_time: 150ms
+  # ESPHome 2026.9+: frame spacing is set here (command_throttle on the controllers no longer has any
+  # effect). Default is 600 ms, which makes writes from HA slow - 80 ms restores the old behaviour.
+  turnaround_time: 80ms
 
 modbus_controller:
   # Fast controller: control + key sensors (short queue = fast writes).
@@ -109,15 +112,15 @@ modbus_controller:
 
 sensor:
 
-  # --- PDU scanner diagnostics (active only in scanner mode) ---
+  # --- PDU scanner (beta) ---
   - platform: template
-    name: "T-/T+ PDU scanner - current register"
+    name: "Immergas - PDU scanner - current register"
     id: pdu_scan_current_sensor
     accuracy_decimals: 0
     entity_category: diagnostic
 
   - platform: template
-    name: "T-/T+ PDU scanner - found count"
+    name: "Immergas - PDU scanner - found"
     id: pdu_scan_found_sensor
     accuracy_decimals: 0
     entity_category: diagnostic
@@ -137,7 +140,9 @@ sensor:
     state_class: measurement
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   - platform: modbus_controller
     modbus_controller_id: immergas_bms
@@ -151,7 +156,9 @@ sensor:
     state_class: measurement
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   - platform: modbus_controller
     modbus_controller_id: immergas_bms
@@ -165,12 +172,14 @@ sensor:
     state_class: measurement
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   - platform: modbus_controller
     modbus_controller_id: immergas_bms
-    name: "Immergas - D23 Indoor Unit return temperature"
-    id: immergas_d23_indoor_unit_return_temp
+    name: "Immergas - Secondary generator (boiler) flow temperature"
+    id: immergas_secondary_gen_flow_temp
     register_type: holding
     address: 3029
     value_type: S_WORD
@@ -179,7 +188,9 @@ sensor:
     state_class: measurement
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   - platform: modbus_controller
     modbus_controller_id: immergas_bms
@@ -204,7 +215,9 @@ sensor:
     state_class: measurement
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   # =========================================================
   # RAW / DIAGNOSTICS
@@ -296,89 +309,25 @@ sensor:
     state_class: measurement
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
-  # R08 Zone 2 max CH (reg. 3003) - exposed as sensor (v.k: RW). Whole °C like R04/R05.
+  # D04 (reg. 3003) - flow setpoint calculated from the heating curve, x0.1 °C; 0 = no heat demand.
+  # (Earlier versions mislabelled this as R08 zone 2.)
   - platform: modbus_controller
     modbus_controller_id: immergas_bms
-    name: "Immergas - R08 Zone 2 low temperature zone maximum central heating"
-    id: immergas_r08_zone_2_max_temp_ch
+    name: "Immergas - D04 Calculated flow setpoint"
+    id: immergas_d04_calc_flow_setpoint
     register_type: holding
     address: 3003
     value_type: U_WORD
     unit_of_measurement: "°C"
     device_class: temperature
-    accuracy_decimals: 0
-
-  # --- Zone 2/3 CANDIDATES (map gaps; unavailable on 1-zone, expected to come alive on multi-zone).
-  # For confirmation on a 2-zone system. 3004/3005 sit next to R08 (3003); 4352-4355 fall in the
-  # gap between Zone 1 CH (4350/4351) and Zone 1 cooling (4356/4357).
-  - platform: modbus_controller
-    modbus_controller_id: immergas_bms_diag
-    name: "Immergas - Zone 2 min CH? candidate (near R08 3003) (3004)"
-    id: immergas_zone23_cand_3004
-    register_type: holding
-    address: 3004
-    value_type: U_WORD
-    entity_category: diagnostic
-    accuracy_decimals: 0
-    force_new_range: true
-
-  - platform: modbus_controller
-    modbus_controller_id: immergas_bms_diag
-    name: "Immergas - Zone 2/3 candidate (near R08) (3005)"
-    id: immergas_zone23_cand_3005
-    register_type: holding
-    address: 3005
-    value_type: U_WORD
-    entity_category: diagnostic
-    accuracy_decimals: 0
-    force_new_range: true
-
-  - platform: modbus_controller
-    modbus_controller_id: immergas_bms_diag
-    name: "Immergas - Zone 2/3 CH candidate (gap 4351-4356) (4352)"
-    id: immergas_zone23_cand_4352
-    register_type: holding
-    address: 4352
-    value_type: U_WORD
-    entity_category: diagnostic
-    accuracy_decimals: 0
-    force_new_range: true
-
-  - platform: modbus_controller
-    modbus_controller_id: immergas_bms_diag
-    name: "Immergas - Zone 2/3 CH candidate (gap 4351-4356) (4353)"
-    id: immergas_zone23_cand_4353
-    register_type: holding
-    address: 4353
-    value_type: U_WORD
-    entity_category: diagnostic
-    accuracy_decimals: 0
-    force_new_range: true
-
-  - platform: modbus_controller
-    modbus_controller_id: immergas_bms_diag
-    name: "Immergas - Zone 2/3 cooling candidate (gap 4351-4356) (4354)"
-    id: immergas_zone23_cand_4354
-    register_type: holding
-    address: 4354
-    value_type: U_WORD
-    entity_category: diagnostic
-    accuracy_decimals: 0
-    force_new_range: true
-
-  - platform: modbus_controller
-    modbus_controller_id: immergas_bms_diag
-    name: "Immergas - Zone 2/3 cooling candidate (gap 4351-4356) (4355)"
-    id: immergas_zone23_cand_4355
-    register_type: holding
-    address: 4355
-    value_type: U_WORD
-    entity_category: diagnostic
-    accuracy_decimals: 0
-    force_new_range: true
-
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
 
   - platform: modbus_controller
     modbus_controller_id: immergas_bms_diag
@@ -391,13 +340,13 @@ sensor:
     accuracy_decimals: 0
 
   - platform: modbus_controller
-    modbus_controller_id: immergas_bms_diag
-    name: "Immergas - PDU 3028"
+    modbus_controller_id: immergas_bms
+    name: "Immergas - D22 3-way valve (1=DHW)"
     id: immergas_pdu_3028
+    icon: mdi:valve
     register_type: holding
     address: 3028
     value_type: U_WORD
-    entity_category: diagnostic
     accuracy_decimals: 0
 
   - platform: modbus_controller
@@ -466,12 +415,14 @@ sensor:
     id: immergas_pdu_4452
     register_type: holding
     address: 4452
-    value_type: U_WORD
+    value_type: S_WORD
     unit_of_measurement: "°C"
     device_class: temperature
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   - platform: modbus_controller
     modbus_controller_id: immergas_bms_diag
@@ -515,29 +466,33 @@ sensor:
 
   - platform: modbus_controller
     modbus_controller_id: immergas_bms
-    name: "Immergas - Refrigerant circuit 4551 (cand. temp D72-74)"
+    name: "Immergas - D74 Evaporator temperature"
     id: immergas_pdu_4551
     register_type: holding
     address: 4551
-    value_type: U_WORD
+    value_type: S_WORD
     unit_of_measurement: "°C"
     device_class: temperature
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   - platform: modbus_controller
     modbus_controller_id: immergas_bms
-    name: "Immergas - Refrigerant circuit 4554 (cand. temp D72-74)"
+    name: "Immergas - Refrigerant hot-side temperature (cand.)"
     id: immergas_pdu_4554
     register_type: holding
     address: 4554
-    value_type: U_WORD
+    value_type: S_WORD
     unit_of_measurement: "°C"
     device_class: temperature
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   # EEV position
   - platform: modbus_controller
@@ -550,13 +505,14 @@ sensor:
     accuracy_decimals: 0
 
   - platform: modbus_controller
-    modbus_controller_id: immergas_bms_diag
-    name: "Immergas - PDU 4558"
+    modbus_controller_id: immergas_bms
+    name: "Immergas - D71 Compressor frequency"
     id: immergas_pdu_4558
+    icon: mdi:sine-wave
     register_type: holding
     address: 4558
     value_type: U_WORD
-    entity_category: diagnostic
+    unit_of_measurement: "Hz"
     accuracy_decimals: 0
 
   - platform: modbus_controller
@@ -565,31 +521,34 @@ sensor:
     id: immergas_pdu_4585
     register_type: holding
     address: 4585
-    value_type: U_WORD
+    value_type: S_WORD
     unit_of_measurement: "°C"
     device_class: temperature
     accuracy_decimals: 1
     filters:
-      - multiply: 0.1
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
 
   - platform: modbus_controller
-    modbus_controller_id: immergas_bms_diag
-    name: "Immergas - PDU 4586"
+    modbus_controller_id: immergas_bms
+    name: "Immergas - Compressor running"
     id: immergas_pdu_4586
+    icon: mdi:heat-pump
     register_type: holding
     address: 4586
     value_type: U_WORD
-    entity_category: diagnostic
     accuracy_decimals: 0
 
   - platform: modbus_controller
-    modbus_controller_id: immergas_bms_diag
-    name: "Immergas - PDU 4587"
+    modbus_controller_id: immergas_bms
+    name: "Immergas - D76 Outdoor unit fan speed (cand.)"
     id: immergas_pdu_4587
+    icon: mdi:fan
     register_type: holding
     address: 4587
     value_type: U_WORD
-    entity_category: diagnostic
+    unit_of_measurement: "rpm"
     accuracy_decimals: 0
 
   - platform: modbus_controller
@@ -758,7 +717,7 @@ sensor:
       return id(immergas_d20_system_flow_temp).state - id(immergas_d06_oat).state;
 
   - platform: template
-    name: "Immergas - Separator delta (system return - indoor unit)"
+    name: "Immergas - Difference HP return - boiler flow"
     id: immergas_separator_delta
     icon: mdi:call-split
     unit_of_measurement: "°C"
@@ -767,20 +726,21 @@ sensor:
     accuracy_decimals: 1
     update_interval: 30s
     lambda: |-
-      if (isnan(id(immergas_d08_system_return_temp).state) || isnan(id(immergas_d23_indoor_unit_return_temp).state)) {
+      if (isnan(id(immergas_d08_system_return_temp).state) || isnan(id(immergas_secondary_gen_flow_temp).state)) {
         return NAN;
       }
-      return id(immergas_d08_system_return_temp).state - id(immergas_d23_indoor_unit_return_temp).state;
+      return id(immergas_d08_system_return_temp).state - id(immergas_secondary_gen_flow_temp).state;
 
 text_sensor:
 
+  # --- PDU scanner (beta) ---
   - platform: template
-    name: "T-/T+ PDU scanner - status"
+    name: "Immergas - PDU scanner - status"
     id: pdu_scan_status
     entity_category: diagnostic
 
   - platform: template
-    name: "T-/T+ PDU scanner - last result"
+    name: "Immergas - PDU scanner - last result"
     id: pdu_scan_last_result
     entity_category: diagnostic
 
@@ -948,6 +908,8 @@ text_sensor:
       if (v == 332) return {"Heating"};
       if (v == 352) return {"Manual heating"};
       if (v == 390) return {"Heating"};
+      if (v == 322) return {"DHW (heat pump)"};
+      if (v == 342) return {"Cooling request"};
       return {std::string("Unknown RAW ") + std::to_string(v)};
 
   - platform: template
@@ -981,16 +943,20 @@ text_sensor:
       if (v == 0) return {"Standby"};
       if (v == 6) return {"Heating"};
       if (v == 8) return {"Heating - cycle"};
-      if (v == 41) return {"Off / Out"};
-      if (v == 62) return {"DHW heating"};
+      if (v == 1) return {"Cooling request"};
+      if (v == 41) return {"Pump overrun (end of CH)"};
+      if (v == 45) return {"End of DHW"};
+      if (v == 61) return {"DHW (solar boost)"};
+      if (v == 62) return {"DHW (gas boiler)"};
+      if (v == 64) return {"DHW (electric heater)"};
       if (v == 82) return {"Standby"};
       return {std::string("Code ") + std::to_string(v)};
 
 switch:
 
-  # --- PDU scanner controls ---
+  # --- PDU scanner (beta) ---
   - platform: template
-    name: "T-/T+ PDU scanner - scanner mode"
+    name: "Immergas - PDU scanner - scanner mode"
     id: pdu_scanner_mode_switch
     icon: mdi:radar
     entity_category: config
@@ -1003,7 +969,7 @@ switch:
           id(pdu_scan_waiting) = false;
           id(immergas_bms).stop_poller();
           id(immergas_bms_diag).stop_poller();
-          id(pdu_scan_status).publish_state("Scanner mode ON. Normal Modbus polling is paused.");
+          id(pdu_scan_status).publish_state("Scanner mode ON - polling paused");
           ESP_LOGW("T_PDU_SCAN", "SCANNER MODE ON - pollers stopped");
     turn_off_action:
       - lambda: |-
@@ -1012,11 +978,11 @@ switch:
           id(pdu_scan_waiting) = false;
           id(immergas_bms).start_poller();
           id(immergas_bms_diag).start_poller();
-          id(pdu_scan_status).publish_state("Normal mode. Modbus polling resumed.");
+          id(pdu_scan_status).publish_state("Normal mode - polling resumed");
           ESP_LOGI("T_PDU_SCAN", "SCANNER MODE OFF - pollers started");
 
   - platform: template
-    name: "T-/T+ PDU scanner - Input function (0x04)"
+    name: "Immergas - PDU scanner - Input function (0x04)"
     id: pdu_scan_input_func_switch
     icon: mdi:swap-horizontal
     entity_category: config
@@ -1025,11 +991,11 @@ switch:
     turn_on_action:
       - lambda: |-
           id(pdu_scan_func) = 0x04;
-          id(pdu_scan_status).publish_state("Scanner function: Input Registers (0x04)");
+          id(pdu_scan_status).publish_state("Scanner: Input Registers (0x04)");
     turn_off_action:
       - lambda: |-
           id(pdu_scan_func) = 0x03;
-          id(pdu_scan_status).publish_state("Scanner function: Holding Registers (0x03)");
+          id(pdu_scan_status).publish_state("Scanner: Holding Registers (0x03)");
 
   - platform: template
     name: "Immergas - BMS connection"
@@ -1180,6 +1146,33 @@ select:
       "Winter (heating + DHW)": 3
 
 number:
+
+  # --- PDU scanner (beta) - any range 0-65535 ---
+  - platform: template
+    name: "Immergas - PDU scanner - from"
+    id: pdu_scan_from
+    icon: mdi:ray-start
+    entity_category: config
+    mode: box
+    min_value: 0
+    max_value: 65535
+    step: 1
+    optimistic: true
+    restore_value: true
+    initial_value: 10000
+
+  - platform: template
+    name: "Immergas - PDU scanner - to"
+    id: pdu_scan_to
+    icon: mdi:ray-end
+    entity_category: config
+    mode: box
+    min_value: 0
+    max_value: 65535
+    step: 1
+    optimistic: true
+    restore_value: true
+    initial_value: 19999
   # =========================================================
   # CONTROL — SETPOINTS / SLIDERS
   # =========================================================
@@ -1306,10 +1299,21 @@ number:
 
 button:
 
-  # --- PDU scanner range buttons (enable scanner mode first) ---
+  # --- PDU scanner (beta) - turn on scanner mode first ---
   - platform: template
-    name: "T-/T+ scan registers 0-999"
+    name: "Immergas - Scan range (from-to)"
     icon: mdi:radar
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(pdu_scan_start) = (int) id(pdu_scan_from).state;
+          id(pdu_scan_end) = (int) id(pdu_scan_to).state;
+      - script.execute: start_pdu_scan
+
+  - platform: template
+    name: "Immergas - Scan PDU 0-999"
+    icon: mdi:radar
+    entity_category: config
     on_press:
       - lambda: |-
           id(pdu_scan_start) = 0;
@@ -1317,8 +1321,9 @@ button:
       - script.execute: start_pdu_scan
 
   - platform: template
-    name: "T-/T+ scan registers 1000-1999"
+    name: "Immergas - Scan PDU 1000-1999"
     icon: mdi:radar
+    entity_category: config
     on_press:
       - lambda: |-
           id(pdu_scan_start) = 1000;
@@ -1326,8 +1331,9 @@ button:
       - script.execute: start_pdu_scan
 
   - platform: template
-    name: "T-/T+ scan registers 2000-2999"
+    name: "Immergas - Scan PDU 2000-2999"
     icon: mdi:radar
+    entity_category: config
     on_press:
       - lambda: |-
           id(pdu_scan_start) = 2000;
@@ -1335,8 +1341,9 @@ button:
       - script.execute: start_pdu_scan
 
   - platform: template
-    name: "T-/T+ scan registers 3000-3999"
+    name: "Immergas - Scan PDU 3000-3999"
     icon: mdi:radar
+    entity_category: config
     on_press:
       - lambda: |-
           id(pdu_scan_start) = 3000;
@@ -1344,8 +1351,9 @@ button:
       - script.execute: start_pdu_scan
 
   - platform: template
-    name: "T-/T+ scan registers 4000-4999"
+    name: "Immergas - Scan PDU 4000-4999"
     icon: mdi:radar
+    entity_category: config
     on_press:
       - lambda: |-
           id(pdu_scan_start) = 4000;
@@ -1353,8 +1361,19 @@ button:
       - script.execute: start_pdu_scan
 
   - platform: template
-    name: "T-/T+ scan registers 5000-5999"
+    name: "Immergas - Scan PDU 4300-4400"
     icon: mdi:radar
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(pdu_scan_start) = 4300;
+          id(pdu_scan_end) = 4400;
+      - script.execute: start_pdu_scan
+
+  - platform: template
+    name: "Immergas - Scan PDU 5000-5999"
+    icon: mdi:radar
+    entity_category: config
     on_press:
       - lambda: |-
           id(pdu_scan_start) = 5000;
@@ -1362,8 +1381,9 @@ button:
       - script.execute: start_pdu_scan
 
   - platform: template
-    name: "T-/T+ scan registers 6000-6999"
+    name: "Immergas - Scan PDU 6000-6999"
     icon: mdi:radar
+    entity_category: config
     on_press:
       - lambda: |-
           id(pdu_scan_start) = 6000;
@@ -1371,8 +1391,9 @@ button:
       - script.execute: start_pdu_scan
 
   - platform: template
-    name: "T-/T+ scan registers 7000-7999"
+    name: "Immergas - Scan PDU 7000-7999"
     icon: mdi:radar
+    entity_category: config
     on_press:
       - lambda: |-
           id(pdu_scan_start) = 7000;
@@ -1380,8 +1401,9 @@ button:
       - script.execute: start_pdu_scan
 
   - platform: template
-    name: "T-/T+ scan registers 8000-8999"
+    name: "Immergas - Scan PDU 8000-8999"
     icon: mdi:radar
+    entity_category: config
     on_press:
       - lambda: |-
           id(pdu_scan_start) = 8000;
@@ -1389,8 +1411,9 @@ button:
       - script.execute: start_pdu_scan
 
   - platform: template
-    name: "T-/T+ scan registers 9000-9999"
+    name: "Immergas - Scan PDU 9000-9999"
     icon: mdi:radar
+    entity_category: config
     on_press:
       - lambda: |-
           id(pdu_scan_start) = 9000;
@@ -1398,8 +1421,19 @@ button:
       - script.execute: start_pdu_scan
 
   - platform: template
-    name: "T-/T+ stop scan"
+    name: "Immergas - Scan PDU 10000-19999"
+    icon: mdi:radar
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(pdu_scan_start) = 10000;
+          id(pdu_scan_end) = 19999;
+      - script.execute: start_pdu_scan
+
+  - platform: template
+    name: "Immergas - Stop PDU scan"
     icon: mdi:stop-circle
+    entity_category: config
     on_press:
       - script.execute: stop_pdu_scan
   - platform: restart
@@ -1443,6 +1477,9 @@ water_heater:
           call.set_value(t);
           call.perform();
 
+# =========================================================
+# PDU SCANNER (beta) - globals / script / interval
+# =========================================================
 globals:
   - id: pdu_scanner_mode
     type: bool
@@ -1491,7 +1528,7 @@ script:
     then:
       - lambda: |-
           if (!id(pdu_scanner_mode)) {
-            id(pdu_scan_status).publish_state("Enable 'scanner mode' first");
+            id(pdu_scan_status).publish_state("Turn on scanner mode first");
             ESP_LOGW("T_PDU_SCAN", "START ignored - scanner mode OFF");
             return;
           }
@@ -1504,7 +1541,7 @@ script:
           id(pdu_scan_current_sensor).publish_state(id(pdu_scan_current));
           id(pdu_scan_found_sensor).publish_state(0);
           char msg[120];
-          snprintf(msg, sizeof(msg), "Scanning: reg %d-%d, function 0x%02X", id(pdu_scan_start), id(pdu_scan_end), id(pdu_scan_func));
+          snprintf(msg, sizeof(msg), "Scan: PDU %d-%d, function 0x%02X", id(pdu_scan_start), id(pdu_scan_end), id(pdu_scan_func));
           id(pdu_scan_status).publish_state(msg);
           id(pdu_scan_last_result).publish_state("Waiting for first response...");
           ESP_LOGI("T_PDU_SCAN", "START range=%d-%d", id(pdu_scan_start), id(pdu_scan_end));
@@ -1526,14 +1563,14 @@ interval:
             id(pdu_scan_active) = false;
             id(pdu_scan_waiting) = false;
             char done[140];
-            snprintf(done, sizeof(done), "Done: reg %d-%d, found %d", id(pdu_scan_start), id(pdu_scan_end), id(pdu_scan_found_count));
+            snprintf(done, sizeof(done), "Done: PDU %d-%d, found %d", id(pdu_scan_start), id(pdu_scan_end), id(pdu_scan_found_count));
             id(pdu_scan_status).publish_state(done);
             ESP_LOGI("T_PDU_SCAN", "DONE range=%d-%d found=%d", id(pdu_scan_start), id(pdu_scan_end), id(pdu_scan_found_count));
             return;
           }
           uint32_t now = millis();
           if (id(pdu_scan_waiting)) {
-            if ((uint32_t)(now - id(pdu_scan_sent_at_ms)) > 260) {
+            if ((uint32_t)(now - id(pdu_scan_sent_at_ms)) > 600) {
               id(pdu_scan_waiting) = false;
               id(pdu_scan_current) = id(pdu_scan_last_sent) + 1;
               id(pdu_scan_current_sensor).publish_state(id(pdu_scan_current));
@@ -1544,4 +1581,5 @@ interval:
           id(pdu_scan_last_sent) = reg;
           id(pdu_scan_sent_at_ms) = now;
           id(pdu_scan_waiting) = true;
-          id(immergas_bms).send(id(pdu_scan_func), reg, 1);
+          id(modbus_immergas_tt).queue_pdu(0x0B,
+              modbus::helpers::create_client_pdu((modbus::FunctionCode) id(pdu_scan_func), (uint16_t) reg, 1));
