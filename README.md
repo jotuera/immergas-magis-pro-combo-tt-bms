@@ -12,16 +12,27 @@ This is a community reverse-engineering project — Immergas does not publish th
 - Tested on: **Magis Combo 9 Plus V2** (Audax 9, 9 kW, firmware D91 = 6.0) and **Magis Pro V2** (community-confirmed)
 - The Atom is the Modbus **master**; the heat pump is slave 11.
 
+## What's new in v1.1.0
+
+- **Gas / heat-pump integration settings are now controllable from Home Assistant**: I01 DHW integration, I02 system integration, I03 / I04 max wait times, I05 activation mode (AU/MA), I07 activation band, I09 DHW activation temperature.
+- **More installer settings as controls**: T02 DHW thermostat, T04, P15 anti-legionella, A12 system vent. Every one of them was decoded by changing it on the unit's keypad and then verified by writing it back from HA.
+- New read-outs: **D61 system model** (e.g. *Magis Combo Plus (MCP)*) and **D91 P.C.B. software version** (e.g. *6.0*).
+- 4452 renamed to `PDU 4452` — it is a constant setting, not a refrigerant temperature.
+- ESPHome 2026.9+ cleanup: `command_throttle` removed, `force_new_range` → `reuse_previous_range`; no more deprecation warnings.
+- The ESPHome `project` block is set, so Home Assistant shows the device model as *immergas-magis-pro-combo-tt-bms*.
+
+⚠️ Upgrading from 1.0.0: the registers that became controls (4402, 4403, 4411, 4451, 4453, 4454, 4455, 4468, 4469, 4479, 6013) and the renamed read-outs show up as **new entities** in Home Assistant; the old `PDU …` / `Register … (RW 0-1)` entities become unavailable and can be removed.
+
 ## What it does
 
-- **Reads**: flow/return/DHW/outdoor temperatures, **calculated flow setpoint (D04)**, compressor frequency, evaporator temperature, EEV position, outdoor fan speed, refrigerant-circuit temps, 3-way valve position, heat-pump/boiler/system status, fault code.
-- **Controls**: operating mode (2000), DHW setpoint (2095), zone-1 heating/cooling limits (R04/R05/R12/R13), circulation pump min/max speed (A03/A04), zone-1 thermostat.
+- **Reads**: flow/return/DHW/outdoor temperatures, **calculated flow setpoint (D04)**, compressor frequency, evaporator temperature, EEV position, outdoor fan speed, refrigerant-circuit temps, 3-way valve position, heat-pump/boiler/system status, fault code, system model (D61), firmware version (D91).
+- **Controls**: operating mode (2000), DHW setpoint (2095), zone-1 heating/cooling limits (R04/R05/R12/R13), circulation pump min/max speed (A03/A04), zone-1 thermostat, **gas/heat-pump integration (I01–I09)**, T02, T04, T05, P15 anti-legionella, A12 system vent.
 - **Decoded boiler fault** (114 Immergas anomaly codes), **calculated metrics** (Delta T, mean loop temp, thermal lift, heat-pump return − boiler flow difference).
 - BMS connection toggle (start/stop polling).
 
 ## Requirements
 
-- **ESPHome 2026.9 or newer.** From 2026.9 the frame spacing is set by the `modbus` hub (`turnaround_time`, default **600 ms**); `command_throttle` on the controllers no longer does anything. The config sets `turnaround_time: 80ms` so writes from Home Assistant stay fast. The deprecation warnings for `command_throttle` / `force_new_range` at compile time are harmless.
+- **ESPHome 2026.9 or newer.** From 2026.9 the frame spacing is set by the `modbus` hub (`turnaround_time`, default **600 ms**); `command_throttle` on the controllers no longer does anything. The config sets `turnaround_time: 80ms` so writes from Home Assistant stay fast. (v1.0.0 still produced harmless deprecation warnings for `command_throttle` / `force_new_range`; v1.1.0 no longer does.)
 
 ## ⚠️ Important caveats
 
@@ -34,6 +45,9 @@ This is a community reverse-engineering project — Immergas does not publish th
 - The unit answers **only Modbus function 0x03 (read holding registers)**. Functions 0x01 (coils), 0x02 (discrete inputs) and 0x04 (input registers) are rejected (illegal function).
 - Register banks: **2xxx** (config/control), **3xxx** (sensors), **4xxx** (heat pump / refrigerant), **6xxx** (parameters / statuses). The whole range **0–19999** has been scanned; nothing answers above 6510.
 - The map is fixed — entering the installer PIN on the indoor unit does **not** expose more registers. Heating-curve breakpoints (R02/R03) and most other menu parameters are **not** available on this bus.
+- The **44xx** bank holds integration / installer settings (menus I, T, P), the **65xx** bank holds info read-outs (menu D: D97–D99, D61, D91, internal clock).
+- Settings confirmed **not** exposed on T-/T+ (changed on the unit, no register moved): I08, I10, P07 (but D06 reads *after* the P07 correction), P11, P13, P21, P23, P24, T09, T23, U11, A05, A18, A31, A41, maintenance menu M (M13, M15–M17). Zone remote-panel settings (time programs, room-probe modulation, dew-point correction, anti-freeze temperature…) live on the D+/D- bus, not here.
+- Entering the maintenance menu **M** sets fault code **193** (E193 "test mode") in register 2100 until you leave it.
 - Immergas "PDU N" = holding register address N.
 
 ## Register map (known)
@@ -54,6 +68,16 @@ This is a community reverse-engineering project — Immergas does not publish th
 | 3054 | D14 | Circulator pump flow rate (0 while the pump is stopped) | l/h |
 | 3056 | D24 | Chiller circuit liquid temperature | ×0.1 °C |
 | 4202 | A11 | Outdoor Unit model | code (9 = 9 kW) |
+| 4402 | T02 | DHW thermostat (DHW switch-on differential) | °C, RW |
+| 4403 | P15 | Anti-legionella function | 0/1, RW |
+| 4411 | T04 | (not described in any Immergas manual) | RW |
+| 4451 | I05 | Integration activation mode (0 = AU automatic, 1 = MA manual) | RW |
+| 4453 | I02 | System (CH) integration enabling (1 = AL, 0 = OFF) | 0/1, RW |
+| 4454 | I01 | DHW integration enabling (1 = AL, 0 = OFF) | 0/1, RW |
+| 4455 | I09 | DHW activation temperature (outdoor temp below which DHW integration is enabled) | °C, signed, RW |
+| 4468 | I04 | Central heating max wait time | min, RW |
+| 4469 | I03 | DHW max wait time | min, RW |
+| 4479 | I07 | Activation band | °C, RW |
 | 4350 | R05 | Zone 1 minimum central heating | °C, RW |
 | 4351 | R04 | Zone 1 maximum central heating | °C, RW |
 | 4356 | R13 | Zone 1 maximum cooling | °C, RW |
@@ -67,16 +91,21 @@ This is a community reverse-engineering project — Immergas does not publish th
 | 6000 | T05 | Central heating ignitions timer | RW |
 | 6010 | A03 | Circulation pump minimum speed | %, RW |
 | 6011 | A04 | Circulation pump maximum speed | %, RW |
+| 6013 | A12 | System vent (automatic venting at power-up) | 0/1, RW |
 | 6500 | D97 | Heat pump demand status: 300 = standby, 352 = heating, 322 = DHW (heat pump), 342 = cooling | 0–999 |
 | 6501 | D98 | Thermal generator demand status: 200 = standby, 252 = heating | 0–999 |
 | 6502 | D99 | System state — see below | 0–999 |
-| 6506/6507 | D140/D141 | Internal RTC hour / minute (read-only, free-running) | h / min |
+| 6505 | D91 | P.C.B. software version (60 = 6.0, 83 = 8.3) | ×0.1 |
+| 6506/6507 | D140/D141 | Internal RTC hour / minute (read-only) | h / min |
+| 6510 | D61 | System model: 1 = MP, 2 = MCI, 3 = MCP, 4 = MPH, 5 = MCH, 6 = MCPH | code |
+
+All RW settings in the 44xx / 60xx rows were verified both ways: changing them on the unit's keypad moves the register, and writing them from Home Assistant changes the value on the unit.
 
 **D99 system state codes:** 0 / 82 = standby · 1 = cooling request · 6 = heating request · 8 = heating cycle (seen just before switching to DHW) · 41 = pump overrun after a CH cycle (~3 min) · 45 = end of DHW (~1 min) · 61 = DHW with solar boost · 62 = DHW on the gas boiler (Combo only) · 64 = DHW with the electric heater. DHW codes may depend on model and firmware — one unit on firmware 4.3 reports plain DHW as 61.
 
 ## 🔎 Unknown registers — contributions welcome!
 
-Still unidentified: `2102, 4011, 4201, 4402, 4403, 4411, 4449, 4451, 4452, 4453, 4454, 4455, 4468, 4469, 4479, 4585, 4588, 4600, 6002, 6013, 6014, 6503, 6504, 6505, 6510` (exposed as `PDU <N>`, `Register <N> (RW 0-1)` or `Refrigerant circuit <N> (cand.)`). Most of them stay constant during short central-heating cycles at mild outdoor temperatures; they probably come alive during **DHW on the heat pump, defrost or high compressor load**. The six RW 0/1 registers do **not** change when the indoor-unit menu parameters U11, A35, A39 or P15 are toggled.
+Still unidentified: `2102, 4449, 4600` (writable 0/1, all 0), `4201` (= 1, probably a status), `4452` (constant 25.1 / 23.6 — a setting), `4585` (slow-moving temperature) and the always-zero `4011, 4588, 6002, 6014, 6503, 6504`. None of them reacted to any keypad or zone-panel setting tried so far (see the "not exposed" list above).
 
 If you can correlate any of these with operating states, **please open an issue or PR** — that's how we finish the map.
 
