@@ -2,6 +2,13 @@
 
 🇬🇧 [English](README.md) | 🇵🇱 Polski
 
+<p align="center">
+  <img src="https://img.shields.io/github/v/tag/jotuera/immergas-magis-pro-combo-tt-bms?label=version&color=blue" alt="Wersja">
+  <img src="https://img.shields.io/badge/ESPHome-2026.9%2B-41BDF5.svg" alt="ESPHome 2026.9+">
+  <img src="https://img.shields.io/badge/platform-ESP32-41BDF5.svg" alt="ESP32">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="Licencja: MIT"></a>
+</p>
+
 Odczyt i sterowanie pompą ciepła **Immergas Magis Pro / Combo** (Audax) po magistrali **T-/T+ (BMS) Modbus RS485** za pomocą **M5Stack Atom + ESPHome**, zintegrowane z Home Assistantem.
 
 To projekt społecznościowego reverse-engineeringu. Immergas nie publikuje mapy rejestrów Modbus dla tej magistrali, więc poniższa mapa powstała przez skanowanie, porównanie z instrukcją instalatora Magis Combo, logowanie na żywo cykli pracy i zestawienie z magistralą Samsung NASA (F1/F2).

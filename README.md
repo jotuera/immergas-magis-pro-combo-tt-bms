@@ -2,6 +2,13 @@
 
 🇬🇧 English | 🇵🇱 [Polski](README.pl.md)
 
+<p align="center">
+  <img src="https://img.shields.io/github/v/tag/jotuera/immergas-magis-pro-combo-tt-bms?label=version&color=blue" alt="Version">
+  <img src="https://img.shields.io/badge/ESPHome-2026.9%2B-41BDF5.svg" alt="ESPHome 2026.9+">
+  <img src="https://img.shields.io/badge/platform-ESP32-41BDF5.svg" alt="ESP32">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License: MIT"></a>
+</p>
+
 Read and control an **Immergas Magis Pro / Combo** (Audax heat pump) over the **T-/T+ (BMS) Modbus RS485** bus using an **M5Stack Atom + ESPHome**, integrated into Home Assistant.
 
 This is a community reverse-engineering project. Immergas does not publish the Modbus register map for this bus, so the map below was recovered by scanning, cross-referencing the Magis Combo installer manual, live logging of operating cycles and comparing with the Samsung NASA (F1/F2) bus.
