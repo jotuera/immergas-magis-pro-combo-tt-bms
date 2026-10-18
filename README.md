@@ -1,5 +1,7 @@
 # Immergas Magis Pro / Combo (Audax) — Modbus BMS via ESPHome (M5 Atom)
 
+🇬🇧 English | 🇵🇱 [Polski](README.pl.md)
+
 Read and control an **Immergas Magis Pro / Combo** (Audax heat pump) over the **T-/T+ (BMS) Modbus RS485** bus using an **M5Stack Atom + ESPHome**, integrated into Home Assistant.
 
 This is a community reverse-engineering project. Immergas does not publish the Modbus register map for this bus, so the map below was recovered by scanning, cross-referencing the Magis Combo installer manual, live logging of operating cycles and comparing with the Samsung NASA (F1/F2) bus.
