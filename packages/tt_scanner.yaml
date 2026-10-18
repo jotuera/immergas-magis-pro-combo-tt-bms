@@ -1,0 +1,394 @@
+# Immergas Magis Pro / Combo T-/T+ BMS - package "tt_scanner"
+# Active PDU scanner (optional). Turn on "scanner mode" (pauses normal polling), pick a range, results go to the log.
+# Part of jotuera/immergas-magis-pro-combo-tt-bms (MIT). Loaded by the main YAML through `packages:`.
+# File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
+
+uart:
+  - id: !extend tt_uart
+    # Debug RX - used ONLY by the PDU scanner (beta). Logs nothing during normal operation.
+    debug:
+      direction: BOTH
+      dummy_receiver: false
+      after:
+        timeout: 30ms
+      sequence:
+        - lambda: |-
+            if (!id(tt_pdu_scan_active)) { return; }
+            if (direction != esphome::uart::UART_DIRECTION_RX) { return; }
+            if (bytes.size() < 5) { return; }
+            if (bytes[0] != 0x0B) { return; }
+            int reg = id(tt_pdu_scan_last_sent);
+            char msg[160];
+            if ((bytes[1] == 0x03 || bytes[1] == 0x04) && bytes.size() >= 7 && bytes[2] == 0x02) {
+              uint16_t value = ((uint16_t) bytes[3] << 8) | bytes[4];
+              id(tt_pdu_scan_found_count) += 1;
+              snprintf(msg, sizeof(msg), "OK PDU %d = %u (F%02X)", reg, value, bytes[1]);
+              id(tt_pdu_scan_last_result).publish_state(msg);
+              id(tt_pdu_scan_found_sensor).publish_state(id(tt_pdu_scan_found_count));
+              ESP_LOGI("T_PDU_SCAN", "OK pdu=%d value=%u", reg, value);
+              id(tt_pdu_scan_waiting) = false;
+              id(tt_pdu_scan_current) = reg + 1;
+              id(tt_pdu_scan_current_sensor).publish_state(id(tt_pdu_scan_current));
+              return;
+            }
+            if ((bytes[1] == 0x83 || bytes[1] == 0x84) && bytes.size() >= 5) {
+              if (bytes[2] != 0x02) {
+                snprintf(msg, sizeof(msg), "EXCEPTION PDU %d code %u", reg, bytes[2]);
+                id(tt_pdu_scan_last_result).publish_state(msg);
+                ESP_LOGW("T_PDU_SCAN", "EXCEPTION pdu=%d code=%u", reg, bytes[2]);
+              }
+              id(tt_pdu_scan_waiting) = false;
+              id(tt_pdu_scan_current) = reg + 1;
+              id(tt_pdu_scan_current_sensor).publish_state(id(tt_pdu_scan_current));
+              return;
+            }
+
+sensor:
+  - platform: template
+    name: "${n_tt_pdu_scan_current_sensor}"
+    id: tt_pdu_scan_current_sensor
+    accuracy_decimals: 0
+    entity_category: diagnostic
+
+  - platform: template
+    name: "${n_tt_pdu_scan_found_sensor}"
+    id: tt_pdu_scan_found_sensor
+    accuracy_decimals: 0
+    entity_category: diagnostic
+
+text_sensor:
+  - platform: template
+    name: "${n_tt_pdu_scan_status}"
+    id: tt_pdu_scan_status
+    entity_category: diagnostic
+
+  - platform: template
+    name: "${n_tt_pdu_scan_last_result}"
+    id: tt_pdu_scan_last_result
+    entity_category: diagnostic
+
+switch:
+  - platform: template
+    name: "${n_tt_pdu_scanner_mode_switch}"
+    id: tt_pdu_scanner_mode_switch
+    icon: mdi:radar
+    entity_category: config
+    restore_mode: ALWAYS_OFF
+    optimistic: true
+    turn_on_action:
+      - lambda: |-
+          id(tt_pdu_scanner_mode) = true;
+          id(tt_pdu_scan_active) = false;
+          id(tt_pdu_scan_waiting) = false;
+          id(tt_bms).stop_poller();
+          id(tt_bms_diag).stop_poller();
+          id(tt_pdu_scan_status).publish_state("Scanner mode ON - polling paused");
+          ESP_LOGW("T_PDU_SCAN", "SCANNER MODE ON - pollers stopped");
+    turn_off_action:
+      - lambda: |-
+          id(tt_pdu_scanner_mode) = false;
+          id(tt_pdu_scan_active) = false;
+          id(tt_pdu_scan_waiting) = false;
+          id(tt_bms).start_poller();
+          id(tt_bms_diag).start_poller();
+          id(tt_pdu_scan_status).publish_state("Normal mode - polling resumed");
+          ESP_LOGI("T_PDU_SCAN", "SCANNER MODE OFF - pollers started");
+
+  - platform: template
+    name: "${n_tt_pdu_scan_input_func_switch}"
+    id: tt_pdu_scan_input_func_switch
+    icon: mdi:swap-horizontal
+    entity_category: config
+    restore_mode: ALWAYS_OFF
+    optimistic: true
+    turn_on_action:
+      - lambda: |-
+          id(tt_pdu_scan_func) = 0x04;
+          id(tt_pdu_scan_status).publish_state("Scanner: Input Registers (0x04)");
+    turn_off_action:
+      - lambda: |-
+          id(tt_pdu_scan_func) = 0x03;
+          id(tt_pdu_scan_status).publish_state("Scanner: Holding Registers (0x03)");
+
+number:
+  - platform: template
+    name: "${n_tt_pdu_scan_from}"
+    id: tt_pdu_scan_from
+    icon: mdi:ray-start
+    entity_category: config
+    mode: box
+    min_value: 0
+    max_value: 65535
+    step: 1
+    optimistic: true
+    restore_value: true
+    initial_value: 10000
+
+  - platform: template
+    name: "${n_tt_pdu_scan_to}"
+    id: tt_pdu_scan_to
+    icon: mdi:ray-end
+    entity_category: config
+    mode: box
+    min_value: 0
+    max_value: 65535
+    step: 1
+    optimistic: true
+    restore_value: true
+    initial_value: 19999
+
+button:
+  - platform: template
+    name: "${n_tt_pdu_scan_btn_range}"
+    id: pdu_scan_btn_range
+    icon: mdi:radar
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(tt_pdu_scan_start) = (int) id(tt_pdu_scan_from).state;
+          id(tt_pdu_scan_end) = (int) id(tt_pdu_scan_to).state;
+      - script.execute: tt_start_pdu_scan
+
+  - platform: template
+    name: "${n_tt_pdu_scan_btn_0_999}"
+    id: pdu_scan_btn_0_999
+    icon: mdi:radar
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(tt_pdu_scan_start) = 0;
+          id(tt_pdu_scan_end) = 999;
+      - script.execute: tt_start_pdu_scan
+
+  - platform: template
+    name: "${n_tt_pdu_scan_btn_1000_1999}"
+    id: pdu_scan_btn_1000_1999
+    icon: mdi:radar
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(tt_pdu_scan_start) = 1000;
+          id(tt_pdu_scan_end) = 1999;
+      - script.execute: tt_start_pdu_scan
+
+  - platform: template
+    name: "${n_tt_pdu_scan_btn_2000_2999}"
+    id: pdu_scan_btn_2000_2999
+    icon: mdi:radar
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(tt_pdu_scan_start) = 2000;
+          id(tt_pdu_scan_end) = 2999;
+      - script.execute: tt_start_pdu_scan
+
+  - platform: template
+    name: "${n_tt_pdu_scan_btn_3000_3999}"
+    id: pdu_scan_btn_3000_3999
+    icon: mdi:radar
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(tt_pdu_scan_start) = 3000;
+          id(tt_pdu_scan_end) = 3999;
+      - script.execute: tt_start_pdu_scan
+
+  - platform: template
+    name: "${n_tt_pdu_scan_btn_4000_4999}"
+    id: pdu_scan_btn_4000_4999
+    icon: mdi:radar
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(tt_pdu_scan_start) = 4000;
+          id(tt_pdu_scan_end) = 4999;
+      - script.execute: tt_start_pdu_scan
+
+  - platform: template
+    name: "${n_tt_pdu_scan_btn_4300_4400}"
+    id: pdu_scan_btn_4300_4400
+    icon: mdi:radar
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(tt_pdu_scan_start) = 4300;
+          id(tt_pdu_scan_end) = 4400;
+      - script.execute: tt_start_pdu_scan
+
+  - platform: template
+    name: "${n_tt_pdu_scan_btn_5000_5999}"
+    id: pdu_scan_btn_5000_5999
+    icon: mdi:radar
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(tt_pdu_scan_start) = 5000;
+          id(tt_pdu_scan_end) = 5999;
+      - script.execute: tt_start_pdu_scan
+
+  - platform: template
+    name: "${n_tt_pdu_scan_btn_6000_6999}"
+    id: pdu_scan_btn_6000_6999
+    icon: mdi:radar
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(tt_pdu_scan_start) = 6000;
+          id(tt_pdu_scan_end) = 6999;
+      - script.execute: tt_start_pdu_scan
+
+  - platform: template
+    name: "${n_tt_pdu_scan_btn_7000_7999}"
+    id: pdu_scan_btn_7000_7999
+    icon: mdi:radar
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(tt_pdu_scan_start) = 7000;
+          id(tt_pdu_scan_end) = 7999;
+      - script.execute: tt_start_pdu_scan
+
+  - platform: template
+    name: "${n_tt_pdu_scan_btn_8000_8999}"
+    id: pdu_scan_btn_8000_8999
+    icon: mdi:radar
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(tt_pdu_scan_start) = 8000;
+          id(tt_pdu_scan_end) = 8999;
+      - script.execute: tt_start_pdu_scan
+
+  - platform: template
+    name: "${n_tt_pdu_scan_btn_9000_9999}"
+    id: pdu_scan_btn_9000_9999
+    icon: mdi:radar
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(tt_pdu_scan_start) = 9000;
+          id(tt_pdu_scan_end) = 9999;
+      - script.execute: tt_start_pdu_scan
+
+  - platform: template
+    name: "${n_tt_pdu_scan_btn_10000_19999}"
+    id: pdu_scan_btn_10000_19999
+    icon: mdi:radar
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(tt_pdu_scan_start) = 10000;
+          id(tt_pdu_scan_end) = 19999;
+      - script.execute: tt_start_pdu_scan
+
+  - platform: template
+    name: "${n_tt_pdu_scan_btn_stop}"
+    id: pdu_scan_btn_stop
+    icon: mdi:stop-circle
+    entity_category: config
+    on_press:
+      - script.execute: tt_stop_pdu_scan
+
+globals:
+  - id: tt_pdu_scanner_mode
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: tt_pdu_scan_active
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: tt_pdu_scan_waiting
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: tt_pdu_scan_start
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: tt_pdu_scan_end
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: tt_pdu_scan_current
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: tt_pdu_scan_last_sent
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: tt_pdu_scan_found_count
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: tt_pdu_scan_sent_at_ms
+    type: uint32_t
+    restore_value: no
+    initial_value: '0'
+  - id: tt_pdu_scan_func
+    type: uint8_t
+    restore_value: no
+    initial_value: '0x03'
+
+script:
+  - id: tt_start_pdu_scan
+    mode: restart
+    then:
+      - lambda: |-
+          if (!id(tt_pdu_scanner_mode)) {
+            id(tt_pdu_scan_status).publish_state("Turn on scanner mode first");
+            ESP_LOGW("T_PDU_SCAN", "START ignored - scanner mode OFF");
+            return;
+          }
+          id(tt_bms).stop_poller();
+          id(tt_bms_diag).stop_poller();
+          id(tt_pdu_scan_active) = true;
+          id(tt_pdu_scan_waiting) = false;
+          id(tt_pdu_scan_current) = id(tt_pdu_scan_start);
+          id(tt_pdu_scan_found_count) = 0;
+          id(tt_pdu_scan_current_sensor).publish_state(id(tt_pdu_scan_current));
+          id(tt_pdu_scan_found_sensor).publish_state(0);
+          char msg[120];
+          snprintf(msg, sizeof(msg), "Scan: PDU %d-%d, function 0x%02X", id(tt_pdu_scan_start), id(tt_pdu_scan_end), id(tt_pdu_scan_func));
+          id(tt_pdu_scan_status).publish_state(msg);
+          id(tt_pdu_scan_last_result).publish_state("Waiting for first response...");
+          ESP_LOGI("T_PDU_SCAN", "START range=%d-%d", id(tt_pdu_scan_start), id(tt_pdu_scan_end));
+  - id: tt_stop_pdu_scan
+    mode: restart
+    then:
+      - lambda: |-
+          id(tt_pdu_scan_active) = false;
+          id(tt_pdu_scan_waiting) = false;
+          id(tt_pdu_scan_status).publish_state("Scan stopped");
+          ESP_LOGI("T_PDU_SCAN", "STOP current=%d found=%d", id(tt_pdu_scan_current), id(tt_pdu_scan_found_count));
+
+interval:
+  - interval: 160ms
+    then:
+      - lambda: |-
+          if (!id(tt_pdu_scanner_mode) || !id(tt_pdu_scan_active)) { return; }
+          if (id(tt_pdu_scan_current) > id(tt_pdu_scan_end)) {
+            id(tt_pdu_scan_active) = false;
+            id(tt_pdu_scan_waiting) = false;
+            char done[140];
+            snprintf(done, sizeof(done), "Done: PDU %d-%d, found %d", id(tt_pdu_scan_start), id(tt_pdu_scan_end), id(tt_pdu_scan_found_count));
+            id(tt_pdu_scan_status).publish_state(done);
+            ESP_LOGI("T_PDU_SCAN", "DONE range=%d-%d found=%d", id(tt_pdu_scan_start), id(tt_pdu_scan_end), id(tt_pdu_scan_found_count));
+            return;
+          }
+          uint32_t now = millis();
+          if (id(tt_pdu_scan_waiting)) {
+            if ((uint32_t)(now - id(tt_pdu_scan_sent_at_ms)) > 600) {
+              id(tt_pdu_scan_waiting) = false;
+              id(tt_pdu_scan_current) = id(tt_pdu_scan_last_sent) + 1;
+              id(tt_pdu_scan_current_sensor).publish_state(id(tt_pdu_scan_current));
+            }
+            return;
+          }
+          int reg = id(tt_pdu_scan_current);
+          id(tt_pdu_scan_last_sent) = reg;
+          id(tt_pdu_scan_sent_at_ms) = now;
+          id(tt_pdu_scan_waiting) = true;
+          id(tt_modbus).queue_pdu(0x0B,
+              modbus::helpers::create_client_pdu((modbus::FunctionCode) id(tt_pdu_scan_func), (uint16_t) reg, 1));

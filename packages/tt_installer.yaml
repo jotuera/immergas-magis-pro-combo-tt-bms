@@ -1,0 +1,83 @@
+# Immergas Magis Pro / Combo T-/T+ BMS - package "tt_installer"
+# Installer parameters: P15 anti-legionella, A12 venting, A03/A04 pump speed, T04, T05.
+# Part of jotuera/immergas-magis-pro-combo-tt-bms (MIT). Loaded by the main YAML through `packages:`.
+# File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
+
+switch:
+  # Installer settings confirmed by changing them on the unit and writing them back from HA.
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_p15_legionella}"
+    id: tt_p15_legionella
+    icon: mdi:bacteria-outline
+    register_type: holding
+    address: 4403
+    bitmask: 1
+    entity_category: config
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_a12_venting}"
+    id: tt_a12_venting
+    icon: mdi:pipe-valve
+    register_type: holding
+    address: 6013
+    bitmask: 1
+    entity_category: config
+
+number:
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_t04_unknown}"
+    id: tt_t04_unknown
+    icon: mdi:help-circle-outline
+    register_type: holding
+    address: 4411
+    value_type: U_WORD
+    min_value: 0
+    max_value: 99
+    step: 1
+    mode: slider
+    entity_category: config
+
+  # A03 — circulation pump minimum speed. Configuration parameter.
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_pump_min_speed_set}"
+    id: tt_pump_min_speed_set
+    register_type: holding
+    address: 6010
+    value_type: U_WORD
+    unit_of_measurement: "%"
+    min_value: 30
+    max_value: 100
+    step: 1
+    mode: slider
+
+  # A04 — circulation pump maximum speed. Configuration parameter.
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_pump_max_speed_set}"
+    id: tt_pump_max_speed_set
+    register_type: holding
+    address: 6011
+    value_type: U_WORD
+    unit_of_measurement: "%"
+    min_value: 50
+    max_value: 100
+    step: 1
+    mode: slider
+
+  # T05 — time between ignitions. Boiler operation parameter.
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_t05_time_between_ignitions_set}"
+    id: tt_t05_time_between_ignitions_set
+    register_type: holding
+    address: 6000
+    value_type: U_WORD
+    unit_of_measurement: "min"
+    min_value: 1
+    max_value: 20
+    step: 1
+    mode: slider

@@ -1,0 +1,91 @@
+# Immergas Magis Pro / Combo T-/T+ BMS - package "tt_dhw"
+# Domestic hot water: D03 tank temperature, DHW setpoint (2095) as a water_heater entity, T02 DHW thermostat.
+# Part of jotuera/immergas-magis-pro-combo-tt-bms (MIT). Loaded by the main YAML through `packages:`.
+# File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
+
+sensor:
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_d03_dhw_temperatura_zasobnika}"
+    id: tt_d03_dhw_temperatura_zasobnika
+    register_type: holding
+    address: 3016
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
+
+number:
+  # DHW: set °C in HA; register 2095 receives x10 (e.g. 43°C -> 430).
+  # 43°C -> 430, 50°C -> 500.
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_zadana_temperatura_cwu}"
+    id: tt_zadana_temperatura_cwu
+    internal: true
+    register_type: holding
+    address: 2095
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    min_value: 10
+    max_value: 55
+    step: 1
+    multiply: 10
+    mode: slider
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_t02_dhw_thermostat}"
+    id: tt_t02_dhw_thermostat
+    icon: mdi:thermometer-water
+    register_type: holding
+    address: 4402
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    min_value: 0
+    max_value: 20
+    step: 1
+    mode: slider
+
+water_heater:
+  - platform: template
+    name: "${n_tt_cwu_water_heater}"
+    id: tt_cwu_water_heater
+    icon: mdi:water-boiler
+
+    current_temperature: !lambda |-
+      return id(tt_d03_dhw_temperatura_zasobnika).state;
+
+    target_temperature: !lambda |-
+      return id(tt_zadana_temperatura_cwu).state;
+
+    mode: !lambda |-
+      return water_heater::WATER_HEATER_MODE_ECO;
+
+    is_on: !lambda |-
+      return true;
+
+    supported_modes:
+      - ECO
+
+    visual:
+      min_temperature: 10.0
+      max_temperature: 55.0
+      target_temperature_step: 1.0
+
+    optimistic: true
+
+    set_action:
+      - lambda: |-
+          float t = id(tt_cwu_water_heater).get_target_temperature();
+          ESP_LOGI("immergas_cwu", "New DHW setpoint from water_heater: %.1f C", t);
+
+          auto call = id(tt_zadana_temperatura_cwu).make_call();
+          call.set_value(t);
+          call.perform();

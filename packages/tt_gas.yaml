@@ -1,0 +1,142 @@
+# Immergas Magis Pro / Combo T-/T+ BMS - package "tt_gas"
+# Estimated gas consumption (m³) for the HA Energy dashboard: boiler run time x calibrated m³/h.
+# Part of jotuera/immergas-magis-pro-combo-tt-bms (MIT). Loaded by the main YAML through `packages:`.
+# File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
+
+substitutions:
+  tt_gas_rate_ch_default: "1.2"     # m³/h while the boiler heats (CH) - starting value, calibrate
+  tt_gas_rate_dhw_default: "2.0"    # m³/h while the boiler makes DHW - starting value, calibrate
+
+# Counter kept in flash, written every 10 min (at most the last 10 min are lost on a power cut).
+preferences:
+  flash_write_interval: 10min
+
+globals:
+  # double, not float: with thousands of m³ a float loses 10-second increments (~0.003 m³).
+  - id: tt_gas_total_m3
+    type: double
+    restore_value: true
+    initial_value: '0.0'
+  # 0 = boiler off, 1 = CH by boiler, 2 = DHW by gas. Updated every 10 s.
+  - id: tt_gas_mode
+    type: int
+    restore_value: false
+    initial_value: '0'
+
+sensor:
+  - platform: template
+    name: "${n_tt_gas_flow_est}"
+    id: tt_gas_flow_est
+    icon: mdi:fire
+    unit_of_measurement: "m³/h"
+    device_class: volume_flow_rate
+    state_class: measurement
+    accuracy_decimals: 2
+    update_interval: 30s
+    lambda: |-
+      int mode = id(tt_gas_mode);
+      if (mode == 2) return id(tt_gas_rate_dhw).state;
+      if (mode == 1) return id(tt_gas_rate_ch).state;
+      return 0.0f;
+
+  # For the Energy dashboard: Settings -> Dashboards -> Energy -> Gas consumption -> this entity.
+  - platform: template
+    name: "${n_tt_gas_total}"
+    id: tt_gas_total
+    icon: mdi:meter-gas
+    unit_of_measurement: "m³"
+    device_class: gas
+    state_class: total_increasing
+    accuracy_decimals: 3
+    update_interval: 60s
+    lambda: |-
+      return (float) id(tt_gas_total_m3);
+
+binary_sensor:
+  - platform: template
+    name: "${n_tt_gas_boiler_running}"
+    id: tt_gas_boiler_running
+    icon: mdi:fire
+    lambda: |-
+      return id(tt_gas_mode) != 0;
+
+number:
+  # Calibration: read the gas meter at the start and end of a period, divide by the increase of
+  # "Gas estimated consumption" and multiply both rates by that factor.
+  - platform: template
+    name: "${n_tt_gas_rate_ch}"
+    id: tt_gas_rate_ch
+    icon: mdi:radiator
+    entity_category: config
+    unit_of_measurement: "m³/h"
+    min_value: 0.1
+    max_value: 4.0
+    step: 0.01
+    initial_value: ${tt_gas_rate_ch_default}
+    restore_value: true
+    optimistic: true
+    mode: box
+
+  - platform: template
+    name: "${n_tt_gas_rate_dhw}"
+    id: tt_gas_rate_dhw
+    icon: mdi:water-boiler
+    entity_category: config
+    unit_of_measurement: "m³/h"
+    min_value: 0.1
+    max_value: 4.0
+    step: 0.01
+    initial_value: ${tt_gas_rate_dhw_default}
+    restore_value: true
+    optimistic: true
+    mode: box
+
+button:
+  # Home Assistant treats a reset like a meter replacement; the Energy history stays. Check the gas cost
+  # statistic after a reset (a jump of the counter can be counted as consumption).
+  - platform: template
+    name: "${n_tt_gas_reset}"
+    id: tt_gas_reset
+    icon: mdi:restore
+    entity_category: config
+    on_press:
+      - lambda: |-
+          id(tt_gas_total_m3) = 0.0;
+          id(tt_gas_total).publish_state(0.0f);
+          ESP_LOGW("tt_gas", "Gas counter reset");
+
+interval:
+  - interval: 10s
+    then:
+      - lambda: |-
+          // No BMS data (polling paused / no answer) -> nothing is counted.
+          if (!id(tt_bms_connection_switch).state ||
+              isnan(id(tt_system_state_raw).state) || isnan(id(tt_status_boilera_raw).state)) {
+            id(tt_gas_mode) = 0;
+            return;
+          }
+          int d99 = (int) id(tt_system_state_raw).state;
+          int d98 = (int) id(tt_status_boilera_raw).state;
+          // Checked on recordings (boiler flow 3029 minus HP return D08):
+          //   D99 62            = DHW by gas                (~38 K)
+          //   D98 215 / D99 8   = CH by boiler, cycle         (~47 K)
+          //   D98 236 / D99 7   = CH by boiler only (I10)     (6-22 K)
+          //   D98 252 / D99 6   = normal HEAT PUMP heating    (~1-2 K) -> not gas
+          //   D99 41/44/45/46   = overrun after CH/DHW, burner off -> not gas
+          // The code for gas joining a running heat pump (integration after I04) is not known yet,
+          // so in CH a physical signal also counts: boiler flow >= D08 + 8 K.
+          int mode = 0;
+          if (d99 == 62) {
+            mode = 2;
+          } else if (d98 == 215 || d98 == 236 || d99 == 7) {
+            mode = 1;
+          } else if (d99 == 6 || d99 == 8) {
+            float kot = id(tt_secondary_gen_flow_temp).state;
+            float ret = id(tt_d08_system_return_temp).state;
+            if (!isnan(kot) && !isnan(ret) && kot - ret >= 8.0f) mode = 1;
+          }
+          id(tt_gas_mode) = mode;
+          if (mode == 0) return;
+          float rate = (mode == 2) ? id(tt_gas_rate_dhw).state : id(tt_gas_rate_ch).state;
+          if (isnan(rate) || rate <= 0) return;
+          id(tt_gas_total_m3) += (double) rate * 10.0 / 3600.0;

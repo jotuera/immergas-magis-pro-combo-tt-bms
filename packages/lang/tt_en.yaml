@@ -1,0 +1,266 @@
+# Immergas Magis Pro / Combo T-/T+ BMS - language file: English
+# Entity names (n_tt_*) and texts shown in Home Assistant (t_tt_*). Pick ONE tt_ language file in the packages list.
+# Changing the language renames the entities: Home Assistant then creates new entities (history stays on the old ones).
+
+substitutions:
+  # texts
+  t_tt_code: "Code "
+  t_tt_d97_300: "Standby"
+  t_tt_d97_322: "DHW (heat pump)"
+  t_tt_d97_332: "Heating"
+  t_tt_d97_336: "Excluded (I10 threshold) - boiler heats"
+  t_tt_d97_342: "Cooling request"
+  t_tt_d97_352: "Manual heating"
+  t_tt_d97_390: "Heating"
+  t_tt_d98_200: "Standby"
+  t_tt_d98_215: "Boiler heating (cycle)"
+  t_tt_d98_232: "Heating"
+  t_tt_d98_236: "Heating by boiler only (heat pump excluded)"
+  t_tt_d98_252: "Manual heating"
+  t_tt_d99_0: "Standby"
+  t_tt_d99_1: "Cooling request"
+  t_tt_d99_41: "Pump overrun (end of CH)"
+  t_tt_d99_44: "End of DHW (heat pump)"
+  t_tt_d99_45: "End of DHW"
+  t_tt_d99_6: "Heating"
+  t_tt_d99_61: "DHW (heat pump)"
+  t_tt_d99_62: "DHW (gas boiler)"
+  t_tt_d99_64: "DHW (electric heater)"
+  t_tt_d99_7: "Heating by boiler only (heat pump excluded)"
+  t_tt_d99_8: "Heating - cycle"
+  t_tt_d99_82: "Standby"
+  t_tt_i05_auto: "Automatic (AU)"
+  t_tt_i05_manual: "Manual (MA)"
+  t_tt_mode_cooling: "Cooling"
+  t_tt_mode_standby: "Standby"
+  t_tt_mode_summer: "Summer (DHW)"
+  t_tt_mode_winter: "Winter (heating + DHW)"
+  t_tt_no_faults: "No faults"
+  t_tt_unknown: "Unknown"
+  t_tt_unknown_raw: "Unknown RAW "
+
+  # boiler fault descriptions (C++ cases of the "Boiler fault (description)" lambda)
+  l_tt_fault_cases: |-
+    case 0: t = "SYSTEM OK. Correctly working system -> No action required"; break;
+    case 1: t = "No ignition block. Failure to detect the flame at the end of the last attempt at ignition -> Press the Reset button"; break;
+    case 2: t = "Safety thermostat block (over-temperature). The safety thermostat has intervened -> Press the Reset button"; break;
+    case 3: t = "Flue safety thermostat block. The flue safety thermostat has intervened -> Press the Reset button (Nike versions)/ Correctly configure the P.14 parameter. Press the Reset button if required (Star versions)"; break;
+    case 4: t = "Contacts resistance block. Detected an abnormality in the driving circuit of the gas valve -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 5: t = "Flow probe anomaly. The flow sensor provides a resistive value out of range -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 6: t = "Domestic hot water probe anomaly. The Domestic hot water sensor provides a resistive value out of range -> In this case the boiler continues to produce domestic hot water but not with optimal performance. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 8: t = "Maximum N° of reset. Indicates the maximum number of reset allowed by integrated P.C.B. -> Attention: the anomaly can be reset 5 times consecutively, after which the function in inhibited for at least one hour. One attempt is gained every hour for a maximum of 5 attempts. By switching the appliance on and off again, the 5 attempts are re-acquired."; break;
+    case 10: t = "Insufficient system pressure. The pressure switch contact is open -> Check on the boiler pressure gauge that the system pressure is between 1-1.2 bar and restore the correct pressure if necessary."; break;
+    case 11: t = "Flue pressure switch anomaly. This occurs in case of a fault in the flue pressure switch or the fan. -> If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)"; break;
+    case 12: t = "Storage tank probe anomaly. The domestic hot water tank sensor provides a resistive value out of range -> The boiler does not satisfy the DHW production requests. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 13: t = "Air/flue gas flow-meter out of range. The air/flue gas signal is out of range or with fan stopped, the controller reads an excessively high signal -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 15: t = "Configuration error. The P.C.B. finds a mismatch between the configuration and the input signals -> If normal conditions are restored the boiler restarts without having to be reset. Check that the boiler is configured correctly. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 16: t = "Fan anomaly. The fan is rotated when it is not powered or is stationary when powered -> Press the Reset button. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 17: t = "Incorrect fan speed. The number of fan revolutions is out of the correct range -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 20: t = "Parasite flame block. Flame detection abnormal -> Press the Reset button. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 23: t = "Return probe anomaly. The return sensor provides a resistive value out of range -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 24: t = "Push button control panel anomaly. It is detected a continuous pressure on the dashboard buttons -> If normal conditions are restored the boiler restarts without having to be reset. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 25: t = "Flue probe block / CRC block (TERA). Flue gas temperature out of range / memory corrupted (TERA) -> Press the Reset button"; break;
+    case 27: t = "Insufficient circulation. Overheating of the boiler due to poor circulation in the primary circuit -> Press the Reset button"; break;
+    case 28: t = "Domestic hot water leakage. If during the heating stage, a rise in domestic hot water temperature occurs, an anomaly is signalled and heating temperature is reduced to limit the formation of limescale in the heat exchanger. -> If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)"; break;
+    case 29: t = "Flue probe anomaly. The flue sensor provides a resistive value out of range -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 31: t = "Loss of communication with the CARV2. There is no communication between the boiler and remote. -> Power cycle the boiler. If the Remote Control is still not detected on re-starting the boiler will switch to local operating mode, i.e. using the controls on the control panel. In this case the ''Central Heating'' mode cannot be activated."; break;
+    case 32: t = "Zone 2 low temperature probe anomaly. Zone 2 flow probe out of range -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 33: t = "Zone 3 low temperature probe anomaly. Zone 3 flow probe out of range -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 36: t = "IMG Bus communication loss. Loss of communication on the IMG Bus protocol. -> The boiler does not satisfy the room heating requests."; break;
+    case 37: t = "Low power supply voltage. The P.C.B. supply voltage has values below the allowed limits. -> If normal conditions are restored the boiler restarts without having to be reset."; break;
+    case 38: t = "Loss of flame signal. The P.C.B., after detecting a correct flame current value, signaling a drop in flame current. -> If normal conditions are restored the boiler restarts without having to be reset."; break;
+    case 39: t = "Solar collector probe anomaly. The external probe has an out of range resistive value -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 40: t = "Solar storage tank probe anomaly. The solar storage tank has an out of range resistive value -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 41: t = "High temperature on the solar collector. The solar collector has exceeded the maximum temperature set -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 42: t = "High temperature on the solar storage tank. The solar storage tank has exceeded the maximum temperature set -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 43: t = "Block due to loss of flame signal. Loss of flame signal during operation in regimen for more consecutive times. -> Press the Reset button, before restarting, the boiler will run a post-ventilation cycle."; break;
+    case 44: t = "Block for exceeding the maximum accumulated time, close gas valve opening. The accumulation of the total time of the gas valve opened without flame detection is greater than the maximum allowed. -> Press the Reset button."; break;
+    case 45: t = "dT high. The temperature difference measured between flow and return is ≥ 40 ° C. -> The power of the burner is limited to prevent damage to the condensation module and once the right dT is restored, the boiler resumes regular operation. Make sure there is water circulating in the boiler, that the pump is configured according to system requirements and that the return probe works properly."; break;
+    case 46: t = "Low temperature thermostat intervention / Incorrect wiring/board configuration. The safety thermostat on the boiler flow connection to DIM v2 (operating only at Low Temperature) has reached high temperatures. / Wiring error or use of incorrect spare board -> In this case, after cooling down, it is possible to reset the thermostat (see relative instruction sheet). / If the blockage or anomaly persists it is necessary to call an authorised company (e.g. Immergas Technical Assistance Service)."; break;
+    case 47: t = "Burner power limitation. If the flue gas temperature reaches a high value the card reduces the power supplied by the burner, in order to limit damage to the smoke circuit. -> If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 48: t = "System side flow probe anomaly. The system side flow probe has an out of range resistive value -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 49: t = "High temperature block on return probe. High temperature measured by the return probe -> Make sure that water circulates properly in the boiler and that the three-way valve works properly."; break;
+    case 50: t = "External probe anomaly. The external probe has an out of range resistive value -> Check the external probe connection. The system keeps working"; break;
+    case 51: t = "CAR Wireless communication failure. Absent communication between base transmitter and CARv2 RF. -> Check operation of the Wireless CAR, check the battery charge (refer to the relative instructions booklet)."; break;
+    case 54: t = "Puffer probe anomaly. The puffer probe has an out of range resistive value -> The puffer mode is disabled"; break;
+    case 55: t = "Zone 1 flow temperature probe anomaly. The zone 1 flow probe has an out of range resistive value -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 58: t = "Audax anomaly. Anomaly indication from the AUDAX heat pump connected to the system -> The heat pump does not satisfy the room heating and cooling requests; once the connections are restored, switch the system on and off again"; break;
+    case 59: t = "Main supply voltage frequency block. The P.C.B. has detected an abnormal frequency on the power supply network. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 60: t = "Anomaly pump blocked. The modulating pump is stopped. -> Try to unblock the pump as described in the relative section. If normal conditions are restored the boiler restarts without having to be reset."; break;
+    case 61: t = "Air in circulator pump. The modulating pump is stopped for air detected. -> Vent the pump and the central heating circuit. If normal conditions are restored the boiler restarts without having to be reset."; break;
+    case 62: t = "Complete calibration required. The P.C.B. not have the correct configuration of the combustion control parameters. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 63: t = "System return probe anomaly. The return probe has an out of range resistive value -> The boiler continues to operate without any integration from the external systems connected"; break;
+    case 67: t = "Solar system pressure switch anomaly. Open system pressure switch, possibly no fluid -> Check on the pressure gauge of the solar circulation unit that the pressure is at the correct value"; break;
+    case 70: t = "Return/flow probe exchange. X -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 72: t = "Fast calibration required. The P.C.B. not have the correct configuration of some combustion control parameters. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 73: t = "High flow probe and safety flow probe deviation detected. The delivery probes have a high variance. -> If normal conditions are restored the boiler restarts without having to be reset."; break;
+    case 74: t = "Safety flow probe anomaly. The safety flow sensor provides a resistive value out of range. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 75: t = "Return and/or flow probe malfunction. X -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 76: t = "Return and/or flow probes temperature drift. X -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 77: t = "Combustion control anomaly. Gas valve current detected out of range. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 78: t = "Combustion control anomaly. High current detected on gas valve. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 79: t = "Combustion control anomaly. Low current detected on gas valve. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 80: t = "P.C.B. malfunction block. Detected fault on gas valve electronic driver for problems on gas valve or P.C.B. -> Press the Reset button"; break;
+    case 84: t = "Combustion anomaly - power reduction in progress. Detected conditions similar to low pressure feed gas valve. -> If normal conditions are restored the boiler restarts without having to be reset"; break;
+    case 85: t = "Afterburner problem block. Potential gas valve, electrode or P.C.B. problem -> Press the Reset button. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 87: t = "Block - gas valve control. Detected fault on gas valve control. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 88: t = "Block - gas valve control. Detected fault on gas valve control. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 89: t = "Combustion signal unstable. Detected instability of combustion signal. -> The boiler keeps working."; break;
+    case 90: t = "Combustion signal beyond limit. Detected combustion signal out of bounds. -> The boiler keeps working."; break;
+    case 91: t = "Incorrect ignition block. The P.C.B. has exhausted all of its possible actions for optimum ignition burner. -> Press the Reset button"; break;
+    case 92: t = "Fan revs correction limit. The P.C.B. has reached the maximum fan speed correction. -> The boiler keeps working."; break;
+    case 93: t = "Combustion signal beyond limit. Detected combustion signal out of bounds. -> The boiler keeps working."; break;
+    case 94: t = "Combustion anomaly. Combustion problem detected caused by the system or control combustion. -> If normal conditions are restored the boiler restarts without having to be reset."; break;
+    case 95: t = "Combustion signal discontinuous. Detected discontinuities of combustion signal to problems of electrical connections or signal dispersion. -> The boiler keeps working."; break;
+    case 96: t = "Clogged flue. Detected high obstruction of the boiler assembly. -> The boiler does not start. If the shutdown or fault persists, contact an authorised company (e.g. Authorised Technical After-Sales Service)."; break;
+    case 98: t = "Block - maximum no. of software errors. The P.C.B. is not working properly. -> Press the Reset button"; break;
+    case 99: t = "General block. The P.C.B. is not working properly. -> Press the Reset button"; break;
+    case 101: t = "Audax off-line alarm. Loss of communication with heat pump -> The heat pump does not satisfy the room heating and cooling requests; once the connections are restored, switch the system on and off again"; break;
+    case 102: t = "Zone 1 off-line expansion alarm. Loss of communication with zone 1 expansion -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 103: t = "Zone 2 off-line expansion alarm. Loss of communication with zone 2 expansion -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 104: t = "Zone 3 off-line expansion alarm. Loss of communication with zone 3 expansion -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 106: t = "DHW probe alarm. In the event of boiler integration and separate DHW management, the storage tank probe controlled by the operator has an out of range resistive value -> The system cannot produce domestic hot water with the heat pump. The production of the domestic hot water is guaranteed by the boiler"; break;
+    case 120: t = "Zone 1 dehumidification high set alarm. The zone 1 request setpoint calculated is too high for dehumidification -> The calculated flow set exceeds the limit permitted by the dehumidifier. Cool the room and wait until the dew temperature returns to acceptable values"; break;
+    case 121: t = "Zone 1 device offline alarm. The remote control or the remote control of zone 1 is offline -> Check that the remote control is switched on"; break;
+    case 122: t = "Zone 2 device offline alarm. The remote control or the remote control of zone 2 is offline -> Check that the remote control is switched on"; break;
+    case 123: t = "Zone 3 device offline alarm. The remote control or the remote control of zone 3 is offline -> Check that the remote control is switched on"; break;
+    case 125: t = "Zone 1 room temperature probe anomaly. The room temperature probe of zone 1 is out of range -> In addition to the temperature, the dew point is not calculated for the zone either"; break;
+    case 126: t = "Zone 2 room temperature probe anomaly. The room temperature probe of zone 2 is out of range -> In addition to the temperature, the dew point is not calculated for the zone either"; break;
+    case 127: t = "Zone 3 room temperature probe anomaly. The room temperature probe of zone 3 is out of range -> In addition to the temperature, the dew point is not calculated for the zone either"; break;
+    case 129: t = "Zone 1 humidity probe anomaly. The humidity probe of zone 1 is out of range -> In addition to the humidity, the dew point is not calculated for the zone either"; break;
+    case 130: t = "Zone 2 humidity probe anomaly. The humidity probe of zone 2 is out of range -> In addition to the humidity, the dew point is not calculated for the zone either"; break;
+    case 131: t = "Zone 3 humidity probe anomaly. The humidity probe of zone 3 is out of range -> In addition to the humidity, the dew point is not calculated for the zone either"; break;
+    case 132: t = "Zone 2 dehumidification high set alarm. The zone 2 request setpoint calculated is too high for dehumidification -> The calculated flow set exceeds the limit permitted by the dehumidifier. Cool the room and wait until the dew temperature returns to acceptable values"; break;
+    case 133: t = "Zone 1 dehumidifier fault alarm. The dehumidifier in zone 1 is in alarm conditions -> The system does not dehumidify in the relative zone"; break;
+    case 134: t = "Zone 2 dehumidifier fault alarm. The dehumidifier in zone 2 is in alarm conditions -> The system does not dehumidify in the relative zone"; break;
+    case 135: t = "Zone 3 dehumidifier fault alarm. The dehumidifier in zone 3 is in alarm conditions -> The system does not dehumidify in the relative zone"; break;
+    case 137: t = "Reset system alarm – Restart the system. After a reset operation, which is performed via the control panel, an alarm is signalled because a system restart is required -> Turn the system off and on"; break;
+    case 138: t = "Screed heater in progress. Screed heater function in progress"; break;
+    case 139: t = "Deaeration in progress. Deaeration function in progress"; break;
+    case 177: t = "DHW maximum time alarm. The DHW request was made exceeding a preset maximum time -> The system continues to operate with non-optimal performance"; break;
+    case 178: t = "Anti-legionella cycle not successful. The anti-legionella cycle was not completed successfully within a preset time -> Press the Reset button"; break;
+    case 179: t = "Liquid probe anomaly. The liquid phase probe is out of range. -> The system does not start. Call an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 181: t = "Remote Control communication failure zone 2. There is no dialogue between the board and the remote control in zone 2. -> Disconnect and reconnect the power to the hydronic module. If the Remote Control is still not detected at restart, the system will switch to local operating mode, i.e. using the controls on the control panel. In this case the “Central Heating”, function cannot be activated"; break;
+    case 182: t = "Condensing unit alarm. An alarm is triggered on the condensing unit -> The system does not work, see the anomaly on the condensing unit and its instructions booklet"; break;
+    case 183: t = "Condensing unit alarm in test mode. The condensing unit is in TEST MODE -> During this time, room heating/air conditioning and domestic hot water production requirements cannot be met"; break;
+    case 184: t = "Communication with outdoor unit timeout alarm. Loss of communication with condensing unit -> Have the electrical connection between the units checked"; break;
+    case 185: t = "Safety module communication alarm. Loss of communication with safety module -> Have the electrical connection between the components checked"; break;
+    case 186: t = "Igniter high voltage anomaly. Safety module: there is an igniter voltage anomaly -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 187: t = "Condensing unit return probe alarm. The condensing unit return probe is out of range -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 188: t = "Request out of operating range. The request made is not performed because the outdoor conditions do not enable the activation of the condensing unit -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 189: t = "Communication with communication board timeout alarm. Loss of communication with condensing unit communication board -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 191: t = "RF communication failure towards CAR v2 RF zone 2. The communication between the transmitter base and the CAR v2 RF of zone 2 has failed -> Check operation of the Wireless CAR, check the battery charge (refer to the relative instructions booklet)"; break;
+    case 192: t = "Condensing unit flow probe anomaly. The condensing unit flow probe is out of range -> If the block or anomaly persists, contact an authorised company (e.g. Immergas Technical After-Sales Service)."; break;
+    case 193: t = "Appliance in Test mode. The appliance is controlled by an external device via the Opentherm protocol -> The system continues operating properly"; break;
+    case 194: t = "Audax Pro disabled. The Audax Pro condensing unit has been disabled -> The system continues operating properly"; break;
+    case 195: t = "Liquid phase low temp. anomaly. The temp. of the liquid phase probe is too low -> Check that the cooling circuit is working properly"; break;
+    case 196: t = "High flow temp. block. An excessively high temperature is detected on the heat pump return circuit -> Check that the cooling circuit is working properly"; break;
+    default: t = "General unrecognised anomaly"; break;
+
+  # entity names
+  n_tt_a11_outdoor_unit_model: "Immergas - A11 Outdoor Unit model"
+  n_tt_a12_venting: "Immergas - A12 System vent"
+  n_tt_bms_connection_switch: "Immergas - BMS connection"
+  n_tt_cooling_active: "Immergas - Cooling active"
+  n_tt_cwu_water_heater: "Immergas - DHW"
+  n_tt_d03_dhw_temperatura_zasobnika: "Immergas - D03 Storage tank unit temperature"
+  n_tt_d04_calc_flow_setpoint: "Immergas - D04 Calculated flow setpoint"
+  n_tt_d06_oat: "Immergas - D06 Outdoor temperature"
+  n_tt_d08_system_return_temp: "Immergas - D08 Heat pump return water temperature"
+  n_tt_d14_pump_flow_rate: "Immergas - D14 Circulator pump flow rate"
+  n_tt_d20_system_flow_temp: "Immergas - D20 System flow temperature"
+  n_tt_d24_refrigerant_liquid_phase_temp: "Immergas - D24 Chiller circuit liquid temperature"
+  n_tt_d61_model: "Immergas - D61 System model"
+  n_tt_delta_t: "Immergas - Delta T"
+  n_tt_dhw_active: "Immergas - DHW active"
+  n_tt_eev_position: "Immergas - D77 Electronic expansion valve position"
+  n_tt_error_active: "Immergas - Fault active"
+  n_tt_error_text: "Immergas - Boiler fault (description)"
+  n_tt_esphome_status: "Immergas - ESPHome status"
+  n_tt_gas_boiler_running: "Immergas - Gas boiler running"
+  n_tt_gas_flow_est: "Immergas - Gas estimated flow"
+  n_tt_gas_rate_ch: "Immergas - Gas consumption CH (calibration)"
+  n_tt_gas_rate_dhw: "Immergas - Gas consumption DHW (calibration)"
+  n_tt_gas_reset: "Immergas - Gas: reset counter"
+  n_tt_gas_total: "Immergas - Gas estimated consumption"
+  n_tt_heating_active: "Immergas - Heating active"
+  n_tt_i03_max_wait_dhw: "Immergas - I03 DHW max wait time"
+  n_tt_i04_max_wait_ch: "Immergas - I04 Central heating max wait time"
+  n_tt_i05_integration_mode: "Immergas - I05 Integration activation mode"
+  n_tt_i07_activation_band: "Immergas - I07 Activation band"
+  n_tt_i09_dhw_activation_temp: "Immergas - I09 DHW activation temperature"
+  n_tt_mean_loop_temp: "Immergas - Mean loop temperature"
+  n_tt_operation_mode_select: "Immergas - System operating mode"
+  n_tt_p15_legionella: "Immergas - P15 Anti-legionella function"
+  n_tt_pdu_2100: "Immergas - Boiler fault (code)"
+  n_tt_pdu_3027: "Immergas - PDU 3027"
+  n_tt_pdu_3028: "Immergas - D22 3-way valve (1=DHW)"
+  n_tt_pdu_3061: "Immergas - PDU 3061"
+  n_tt_pdu_4011: "Immergas - PDU 4011"
+  n_tt_pdu_4201: "Immergas - PDU 4201"
+  n_tt_pdu_4452: "Immergas - PDU 4452"
+  n_tt_pdu_4551: "Immergas - D74 Evaporator temperature"
+  n_tt_pdu_4554: "Immergas - D73 Compressor discharge temperature"
+  n_tt_pdu_4558: "Immergas - D71 Compressor frequency"
+  n_tt_pdu_4585: "Immergas - D72 Compressor temperature"
+  n_tt_pdu_4586: "Immergas - Compressor power step"
+  n_tt_pdu_4587: "Immergas - D76 Outdoor unit fan speed (cand.)"
+  n_tt_pdu_4588: "Immergas - PDU 4588"
+  n_tt_pdu_512: "Immergas - PDU 512"
+  n_tt_pdu_6002: "Immergas - PDU 6002"
+  n_tt_pdu_6014: "Immergas - PDU 6014"
+  n_tt_pdu_6503: "Immergas - PDU 6503"
+  n_tt_pdu_6504: "Immergas - PDU 6504"
+  n_tt_pdu_6505: "Immergas - D91 P.C.B. software version"
+  n_tt_pdu_6510: "Immergas - D61 System model RAW"
+  n_tt_pdu_scan_btn_0_999: "Immergas - Scan PDU 0-999"
+  n_tt_pdu_scan_btn_10000_19999: "Immergas - Scan PDU 10000-19999"
+  n_tt_pdu_scan_btn_1000_1999: "Immergas - Scan PDU 1000-1999"
+  n_tt_pdu_scan_btn_2000_2999: "Immergas - Scan PDU 2000-2999"
+  n_tt_pdu_scan_btn_3000_3999: "Immergas - Scan PDU 3000-3999"
+  n_tt_pdu_scan_btn_4000_4999: "Immergas - Scan PDU 4000-4999"
+  n_tt_pdu_scan_btn_4300_4400: "Immergas - Scan PDU 4300-4400"
+  n_tt_pdu_scan_btn_5000_5999: "Immergas - Scan PDU 5000-5999"
+  n_tt_pdu_scan_btn_6000_6999: "Immergas - Scan PDU 6000-6999"
+  n_tt_pdu_scan_btn_7000_7999: "Immergas - Scan PDU 7000-7999"
+  n_tt_pdu_scan_btn_8000_8999: "Immergas - Scan PDU 8000-8999"
+  n_tt_pdu_scan_btn_9000_9999: "Immergas - Scan PDU 9000-9999"
+  n_tt_pdu_scan_btn_range: "Immergas - Scan range (from-to)"
+  n_tt_pdu_scan_btn_stop: "Immergas - Stop PDU scan"
+  n_tt_pdu_scan_current_sensor: "Immergas - PDU scanner - current register"
+  n_tt_pdu_scan_found_sensor: "Immergas - PDU scanner - found"
+  n_tt_pdu_scan_from: "Immergas - PDU scanner - from"
+  n_tt_pdu_scan_input_func_switch: "Immergas - PDU scanner - Input function (0x04)"
+  n_tt_pdu_scan_last_result: "Immergas - PDU scanner - last result"
+  n_tt_pdu_scan_status: "Immergas - PDU scanner - status"
+  n_tt_pdu_scan_to: "Immergas - PDU scanner - to"
+  n_tt_pdu_scanner_mode_switch: "Immergas - PDU scanner - scanner mode"
+  n_tt_pump_max_speed_set: "Immergas - A04 Maximum fixed speed"
+  n_tt_pump_min_speed_set: "Immergas - A03 Minimum speed"
+  n_tt_restart: "Restart Immergas T+T Atom"
+  n_tt_secondary_gen_flow_temp: "Immergas - Secondary generator (boiler) flow temperature"
+  n_tt_separator_delta: "Immergas - Difference HP return - boiler flow"
+  n_tt_status_boilera_raw: "Immergas - D98 Thermal generator demand status RAW (cand.)"
+  n_tt_status_boilera_text: "Immergas - D98 Thermal generator demand status"
+  n_tt_status_pompy_ciepla_raw: "Immergas - D97 Heat pump demand status RAW (cand.)"
+  n_tt_status_pompy_ciepla_text: "Immergas - D97 Heat pump demand status"
+  n_tt_sw_2102: "Immergas - Register 2102 (RW 0-1)"
+  n_tt_sw_4449: "Immergas - Register 4449 (RW 0-1)"
+  n_tt_sw_4453: "Immergas - I02 System integration enabling (AL)"
+  n_tt_sw_4454: "Immergas - I01 DHW integration enabling (AL)"
+  n_tt_sw_4600: "Immergas - Register 4600 (RW 0-1)"
+  n_tt_system_state_raw: "Immergas - D99 System state RAW"
+  n_tt_system_state_text: "Immergas - D99 System state"
+  n_tt_t02_dhw_thermostat: "Immergas - T02 DHW thermostat"
+  n_tt_t04_unknown: "Immergas - T04 (undocumented)"
+  n_tt_t05_time_between_ignitions_set: "Immergas - T05 Central heating ignitions timer"
+  n_tt_thermal_lift: "Immergas - Thermal lift (flow - outdoor)"
+  n_tt_thermal_power: "Immergas - Estimated thermal power"
+  n_tt_tryb_pracy_raw: "Immergas - Operating mode RAW"
+  n_tt_zadana_temperatura_cwu: "Immergas - DHW setpoint"
+  n_tt_zegar_wewnetrzny: "Immergas - Internal clock"
+  n_tt_zone1_max_ch_set: "Immergas - R04 Zone 1 maximum central heating"
+  n_tt_zone1_max_cool_set: "Immergas - R13 Zone 1 maximum cooling"
+  n_tt_zone1_min_ch_set: "Immergas - R05 Zone 1 minimum central heating"
+  n_tt_zone1_min_cool_set: "Immergas - R12 Zone 1 minimum cooling"
+  n_tt_zone_1_thermostat_enable: "Immergas - Zone 1 thermostat enable"

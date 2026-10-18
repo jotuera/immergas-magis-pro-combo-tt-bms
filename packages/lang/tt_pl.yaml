@@ -1,0 +1,266 @@
+# Immergas Magis Pro / Combo T-/T+ BMS - language file: Polski
+# Entity names (n_tt_*) and texts shown in Home Assistant (t_tt_*). Pick ONE tt_ language file in the packages list.
+# Changing the language renames the entities: Home Assistant then creates new entities (history stays on the old ones).
+
+substitutions:
+  # texts
+  t_tt_code: "Kod "
+  t_tt_d97_300: "Standby"
+  t_tt_d97_322: "CWU pompą ciepła (sprężarka)"
+  t_tt_d97_332: "Ogrzewanie"
+  t_tt_d97_336: "Wykluczona (próg I10) - grzeje kocioł"
+  t_tt_d97_342: "Chłodzenie (żądanie)"
+  t_tt_d97_352: "Ogrzewanie manualne"
+  t_tt_d97_390: "Ogrzewanie"
+  t_tt_d98_200: "Standby"
+  t_tt_d98_215: "Grzanie kotłem (cykl)"
+  t_tt_d98_232: "Ogrzewanie"
+  t_tt_d98_236: "Ogrzewanie samym kotłem (PC wykluczona)"
+  t_tt_d98_252: "Ogrzewanie manualne"
+  t_tt_d99_0: "Standby"
+  t_tt_d99_1: "Chłodzenie (żądanie)"
+  t_tt_d99_41: "Dobieg pompy (koniec CO)"
+  t_tt_d99_44: "Koniec CWU pompą ciepła"
+  t_tt_d99_45: "Koniec CWU"
+  t_tt_d99_6: "Ogrzewanie"
+  t_tt_d99_61: "CWU pompą ciepła"
+  t_tt_d99_62: "CWU gazem"
+  t_tt_d99_64: "CWU grzałką elektryczną"
+  t_tt_d99_7: "Ogrzewanie tylko kotłem (PC wykluczona)"
+  t_tt_d99_8: "Ogrzewanie - cykl"
+  t_tt_d99_82: "Standby"
+  t_tt_i05_auto: "Automatyczny (AU)"
+  t_tt_i05_manual: "Ręczny (MA)"
+  t_tt_mode_cooling: "Chłodzenie"
+  t_tt_mode_standby: "Standby"
+  t_tt_mode_summer: "Lato CWU"
+  t_tt_mode_winter: "Zima CO+CWU"
+  t_tt_no_faults: "Brak błędów"
+  t_tt_unknown: "Nieznany"
+  t_tt_unknown_raw: "Nieznany RAW "
+
+  # boiler fault descriptions (C++ cases of the "Boiler fault (description)" lambda)
+  l_tt_fault_cases: |-
+    case 0: t = "SYSTEM OK. System działający prawidłowo -> Nie jest wymagana żadna czynność"; break;
+    case 1: t = "Blokada - brak zapłonu. Nie wykryto płomienia po zakończeniu ostatniej próby włączenia -> Należy nacisnąć na przycisk resetowania."; break;
+    case 2: t = "Blokada termostatu bezpieczeństwa (nadmierna temperatura).. Ingerencja termostatu bezpieczeństwa -> Należy nacisnąć na przycisk resetowania."; break;
+    case 3: t = "Blokada termostatu spalin. Ingerencja termostatu dymu -> Należy nacisnąć na przycisk resetowania. (wersje Nike)/Skonfigurować prawidłowo parametr P.14. W razie konieczności nacisnąć przycisk Reset (wersja Star)"; break;
+    case 4: t = "Blokada oporu styków. Wykryto nieprawidłowość na obwodzie sterującym zaworem gazu -> Kocioł nie uruchamia się. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)"; break;
+    case 5: t = "Nieprawidłowość sondy odpływu. Sonda wyjścia c.o. wykazuje wartość rezystancji poza zakresem -> Kocioł nie uruchamia się. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)"; break;
+    case 6: t = "Nieprawidłowość sondy w.u.. Sonda c.w.u. wykazuje wartość rezystancji poza zakresem -> W tym przypadku kocioł wytwarza c.w.u., lecz nie w warunkach maksymalnych osiągów. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)"; break;
+    case 8: t = "Maksymalna liczba resetów. Wskazuje na osiągnięcie maksymalnej liczby resetów dozwolonych przez elektroniczną płytę główną -> Uwaga: nieprawidłowość można zresetować 5 razy z rzędu, następnie funkcja zostaje zablokowana na przynajmniej godzinę i zyskuje się jedną próbę co godzinę dla maksymalnie 5 prób. Odłączając i włączając zasilanie urządzenia, zyskuje się ponownie 5 prób."; break;
+    case 10: t = "Niewystarczające ciśnienie w instalacji. Styk presostatu c.o. jest otwarty -> Należy sprawdzić na manometrze kotła, czy ciśnienie instalacji zawiera się między 1÷1,2 bara, i ewentualnie przywrócić prawidłowe ciśnienie."; break;
+    case 11: t = "Nieprawidłowość presostatu spalin. Możliwe nieprawidłowości w presostacie spalin lub w wentylatorze -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)"; break;
+    case 12: t = "Nieprawidłowość sondy zasobnika c.w.u.. Sonda zasobnika c.w.u. wykazuje wartość rezystancji poza zakresem -> Kocioł nie może wytworzyć c.w.u. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)"; break;
+    case 13: t = "Miernik natężenia przepływu powietrza/spalin poza zakresem. Sygnał powietrze/spaliny jest poza zakresem lub przy wyłączonym wentylatorze urządzenie kontrolne odczytuje zbyt wysoki sygnał -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 15: t = "Błąd konfiguracji. Karta wykrywa niezgodność między swoją konfiguracją a sygnałami na wejściu -> W razie przywrócenia normalnego stanu, kocioł uruchamia się bez konieczności wyzerowania go. Sprawdzić, czy kocioł jest skonfigurowany prawidłowo. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)"; break;
+    case 16: t = "Nieprawidłowość wentylatora. Wentylator obraca się, gdy nie jest zasilany, lub nie obraca się, gdy jest zasilany -> Należy nacisnąć na przycisk resetowania. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)"; break;
+    case 17: t = "Nieprawidłowa prędkość wentylatora. Liczba obrotów wentylatora przekracza prawidłowy zakres -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 20: t = "Blokada - niepożądany płomień. Wykrycie nieprawidłowego płomienia -> Należy nacisnąć na przycisk resetowania. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)"; break;
+    case 23: t = "Nieprawidłowość sondy powrotu. Sondy powrotu wykazuje wartość rezystancji poza zakresem -> Kocioł nie uruchamia się. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)"; break;
+    case 24: t = "Nieprawidłowość tablicy przyciskowej. Wykryto stały nacisk na przyciskach na tablicy sterowania -> W razie przywrócenia normalnego stanu, kocioł uruchamia się bez konieczności wyzerowania go. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)"; break;
+    case 25: t = "Blokada sondy spalin / blokada CRC (TERA). Temperatura spalin poza zakresem / uszkodzona pamięć (TERA) -> Wcisnąć przycisk Reset"; break;
+    case 27: t = "Niewystarczająca cyrkulacja. Przegrzanie kotła w wyniku słabej cyrkulacji w obwodzie pierwotnym -> Nacisnąć na przycisk Reset"; break;
+    case 28: t = "Przeciek obwodu w.u.. Jeśli podczas pracy w fazie ogrzewania pojawi się podwyższenie temperatury w.u., kocioł wskazuje nieprawidłowość i redukuje temperaturę ogrzewania, aby ograniczyć tworzenie się osadów wapiennych w wymienniku. -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)"; break;
+    case 29: t = "Nieprawidłowość sondy spalin. Sonda spalin wykazuje wartość rezystancji poza zakresem -> Kocioł nie uruchamia się. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)"; break;
+    case 31: t = "Utrata komunikacji z CARV2. Brak komunikacji między kartą a zdalnym sterowaniem. -> Należy odłączyć i ponownie włączyć napięcie kotła. Jeśli nawet przy ponownym włączeniu nie zostanie wykryte zdalne sterowanie, kocioł przechodzi do pracy lokalnej, korzystając ze sterowania obecnego na panelu sterowania. W tym przypadku nie można włączyć funkcji „Ogrzewanie”."; break;
+    case 32: t = "Nieprawidłowość sondy 2. strefy niskiej temperatury. Sonda wyjścia c.o. 2. strefy poza zakresem -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 33: t = "Nieprawidłowość sondy 3. strefy niskiej temperatury. Sonda wyjścia c.o. 3. strefy poza zakresem -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 36: t = "Utrata połączenia IMG Bus. Utrata połączenia na protokole IMG Bus. -> Kocioł nie spełnia wymagań c.o."; break;
+    case 37: t = "Niskie ciśnienie zasilania. Napięcie zasilania karty jest niższe od dopuszczalnych limitów. -> W razie przywrócenia normalnego stanu, kocioł uruchamia się bez konieczności wyzerowania go."; break;
+    case 38: t = "Utrata sygnału płomienia. Karta po osiągnięciu prawidłowej wartości prądu jonizacji odnotowuje jego spadek. -> W razie przywrócenia normalnego stanu, kocioł uruchamia się bez konieczności wyzerowania go."; break;
+    case 39: t = "Nieprawidłowość sondy kolektora słonecznego. Sonda zewnętrzna wykazuje wartość rezystancji poza zakresem -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 40: t = "Nieprawidłowość sondy zasobnika słonecznego. Sonda zasobnika słonecznego wykazuje wartość rezystancji poza zakresem -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 41: t = "Wysoka temperatura na kolektorze słonecznym. Kolektor słoneczny przekroczył maksymalną ustawioną temperaturę -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 42: t = "Wysoka temperatura na zasobniku słonecznym. Zasobnik słoneczny przekroczył maksymalną ustawioną temperaturę -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 43: t = "Blokada z powodu utraty sygnału płomienia. Utrata sygnału płomienia pracy kilka razy z rzędu. -> Należy nacisnąć na przycisk resetowania. Przed ponownym uruchomieniem kocioł wykona cykl post-wentylacji."; break;
+    case 44: t = "Blokada z powodu przekroczenia maksymalnego całkowitego czasu częstego otwierania zaworu gazu. Całkowity czas otwierania zaworu gazu bez wykrycia płomienia jest większy niż dopuszczalny czas maksymalny. -> Należy nacisnąć na przycisk resetowania."; break;
+    case 45: t = "duża ΔT. Różnica temperatury zmierzonej między wyjściem a powrotem wynosi ≥ di 40°C. -> Moc palnika jest zmniejszana, aby zapobiec ewentualnemu uszkodzeniu modułu kondensacyjnego; po przywróceniu prawidłowej ΔT kocioł wraca do normalnego funkcjonowania. Należy sprawdzić, czy w instalacji krąży woda, czy pompa obiegowa jest skonfigurowana zgodnie z wymaganiami instalacji oraz czy sonda powrotu funkcjonuje prawidłowo."; break;
+    case 46: t = "Interwencja termostatu niskiej temperatury (opcja) / Błędna konfiguracja okablowania/karty. Termostat bezpieczeństwa znajdujący się na połączeniu odpływu z kotła z DIM v2 (działający jedynie w niskiej temperaturze) osiągnął wysoką temperaturę. / Błąd okablowania lub błędne użycie karty zamiennej -> W takim przypadku po ochłodzeniu można zresetować termostat (patrz odpowiedni arkusz instrukcji). / Jeśli zablokowanie lub nieprawidłowość utrzymuje się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 47: t = "Ograniczenie mocy palnika. Jeżeli temperatura spalin osiągnie wysoką wartość, karta zmniejszy moc przekazywaną do palnika w celu ograniczenia szkód w obwodzie spalin. -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 48: t = "Nieprawidłowość sondy wyjścia c.o. od strony instalacji. Sonda wyjścia c.o. od strony instalacji wykazuje wartość rezystancji poza zakresem -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 49: t = "Blokada wysokiej temperatury na sondzie po stronie powrotnej. Sonda powrotu zmierzyła wysoką temperaturę -> Sprawdzić, czy obieg w kotle oraz funkcjonowanie zaworu trójdrożnego są prawidłowe."; break;
+    case 50: t = "Nieprawidłowość sondy zewnętrznej. Sonda zewnętrzna wykazuje wartość rezystancji poza zakresem -> Sprawdzić podłączenie sondy zewnętrznej. Instalacja kontynuuje pracę"; break;
+    case 51: t = "Utrata połączenia z CAR Wireless. Połączenie między podstawą nadawczą a CAR v2 RF zostało utracone. -> Sprawdzić działanie CAR Wireless, sprawdzić poziom naładowania baterii (patrz oddzielna instrukcja obsługi)."; break;
+    case 54: t = "Nieprawidłowość sondy puffer. Sonda puffer wykazuje wartość rezystancji poza zakresem -> Tryb puffer zostanie wyłączony"; break;
+    case 55: t = "Nieprawidłowość sondy temperatury wyjścia c.o. 1. strefy. Sonda wyjścia c.o. 1. strefy wykazuje wartość rezystancji poza zakresem -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 58: t = "Nieprawidłowość Audax. Sygnalizacja nieprawidłowości przez podłączoną do instalacji pompę ciepła AUDAX -> Pompa ciepła nie spełnia wymagań ogrzewania i chłodzenia pomieszczenia, po przywróceniu połączeń należy wyłączyć i ponownie uruchomić instalację"; break;
+    case 59: t = "Blokada częstotliwości sieci zasilania elektrycznego. Karta elektryczna wykryła nieprawidłową częstotliwość sieci zasilania elektrycznego. -> Kocioł nie uruchamia się. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 60: t = "Nieprawidłowość pompy obiegowej. Pompa modulująca nie pracuje. -> Podjąć próbę odblokowania pompy obiegowej zgodnie ze wskazówkami w odpowiednim paragrafie. W razie przywrócenia normalnego stanu, kocioł uruchamia się bez konieczności wyzerowania go."; break;
+    case 61: t = "Obecność powietrza w pompie obiegowej. Pompa modulująca nie pracuje na skutek wykrycia powietrza. -> Odpowietrzyć pompę obiegową oraz obwód grzewczy. W razie przywrócenia normalnego stanu, kocioł uruchamia się bez konieczności wyzerowania go."; break;
+    case 62: t = "Żądanie pełnej kalibracji. Karta nie posiada prawidłowej konfiguracji parametrów kontroli spalania. -> Kocioł nie uruchamia się. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 63: t = "Nieprawidłowość sondy powrotu instalacji. Sonda powrotu wykazuje wartość rezystancji poza zakresem -> Kocioł kontynuuje pracę bez żadnej integracji ze strony podłączonych instalacji zewnętrznych"; break;
+    case 67: t = "Nieprawidłowość presostatu instalacji słonecznej. Otwarty presostat instalacji, możliwy brak cieczy -> Sprawdzić na manometrze zespołu pompowego instalacji słonecznej, czy ciśnienie ma prawidłową wartość"; break;
+    case 70: t = "Sondy odwrócone. W przypadku błędu w połączeniu okablowania kotła, wykrywany jest błąd -> Kocioł nie uruchamia się. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 72: t = "Żądanie szybkiej kalibracji. Karta nie posiada prawidłowej konfiguracji niektórych parametrów kontroli spalania. -> Kocioł nie uruchamia się. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 73: t = "Wykryte wysokie odchylenie sondy wyjścia c.o. i sondy wyjścia bezpieczeństwa c.o.. Sondy wyjścia wykazują wysokie odchylenie. -> W razie przywrócenia normalnego stanu kocioł uruchamia się bez konieczności jego wyzerowania"; break;
+    case 74: t = "Nieprawidłowość sondy wyjścia bezpieczeństwa c.o.. Sonda wyjścia bezpieczeństwa c.o. wykazuje wartość rezystancji poza zakresem. -> Kocioł nie uruchamia się. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 75: t = "Blokada w wyniku uszkodzonego czujnika NTC. Możliwe uszkodzenie jednej lub obydwu sond przepływu i powrotu instalacji -> Kocioł nie uruchamia się. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 76: t = "Rozgałęzienie sondy przepływu lub sondy powrotu. Wykryto nieprawidłowe działanie jednej lub obydwu sond przepływu i powrotu instalacji -> Kocioł nie uruchamia się. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 77: t = "Nieprawidłowość kontroli spalania. Wykryto prąd na zaworze gazu poza zakresem. -> Kocioł nie uruchamia się. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 78: t = "Nieprawidłowość kontroli spalania. Wykryto wysoki prąd na zaworze gazu. -> Kocioł nie uruchamia się. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 79: t = "Nieprawidłowość kontroli spalania. Wykryto niski prąd na zaworze gazu. -> Kocioł nie uruchamia się. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 80: t = "Blokada z powodu awarii karty elektronicznej. Wykryto usterkę na sterowniku elektronicznego zaworu gazu w wyniku problemów na karcie lub zaworze gazu. -> Należy nacisnąć na przycisk resetowania."; break;
+    case 84: t = "Nieprawidłowość spalania – trwa zmniejszanie mocy. Wykryto warunki porównywalne do niskiego ciśnienia zasilania zaworu gazu. -> W razie przywrócenia normalnego stanu kocioł uruchamia się bez konieczności jego wyzerowania"; break;
+    case 85: t = "Blokada – problem z dopalaniem. Potencjalny problem z zaworem gazu, elektrodą lub kartą elektroniczną. -> Należy nacisnąć na przycisk resetowania. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)"; break;
+    case 87: t = "Blokada kontroli zaworu gazu. Wykryto usterkę kontroli zaworu gazu. -> Kocioł nie uruchamia się. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 88: t = "Blokada kontroli zaworu gazu. Wykryto usterkę kontroli zaworu gazu. -> Kocioł nie uruchamia się. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 89: t = "Sygnał niestabilnego spalania. Wykryto niestabilny sygnał spalania. -> Kocioł kontynuuje pracę."; break;
+    case 90: t = "Sygnał spalania poza zakresem. Wykryto sygnał spalania poza zakresem. -> Kocioł kontynuuje pracę."; break;
+    case 91: t = "Blokada z powodu nieprawidłowego zapłonu. Karta wyczerpała wszystkie możliwe działania celem posiadania optymalnego zapłonu palnika. -> Należy nacisnąć na przycisk resetowania."; break;
+    case 92: t = "Limit korekcji obrotów wentylatora. Karta osiągnęła maksymalną liczbę korekcji obrotów wentylatora. -> Kocioł kontynuuje pracę."; break;
+    case 93: t = "Sygnał spalania poza zakresem. Wykryto sygnał spalania poza zakresem. -> Kocioł kontynuuje pracę."; break;
+    case 94: t = "Nieprawidłowość spalania. Wykryto błąd w spalaniu spowodowany systemem lub kontrolą spalania. -> W razie przywrócenia normalnego stanu, kocioł uruchamia się bez konieczności wyzerowania go."; break;
+    case 95: t = "Sygnał nieciągły spalania. Wykryto brak ciągłości sygnału spalania na skutek problemów z połączeniami elektrycznymi lub rozszczepienia sygnału. -> Kocioł kontynuuje pracę."; break;
+    case 96: t = "Zatkany układ powietrzno-spalinowy. Wykryto zatkanie układu powietrzno-spalinowego. -> Kocioł nie uruchamia się. Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 98: t = "Blokada wskutek maks. liczby błędów oprogramowania. Karta elektroniczna nie działa prawidłowo. -> Należy nacisnąć na przycisk resetowania."; break;
+    case 99: t = "Blokada ogólna. Karta elektroniczna nie działa prawidłowo. -> Należy nacisnąć na przycisk resetowania."; break;
+    case 101: t = "Alarm pompa Audax jest niedostępna. Utrata połączenia z pompą ciepła -> Pompa ciepła nie spełnia wymagań ogrzewania i chłodzenia pomieszczenia, po przywróceniu połączeń należy wyłączyć i ponownie uruchomić instalację"; break;
+    case 102: t = "Alarm zbiornik wyrównawczy 1. strefy jest niedostępny. Utrata połączenia ze zbiornikiem wyrównawczym 1. strefy -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 103: t = "Alarm zbiornik wyrównawczy 2. strefy jest niedostępny. Utrata połączenia ze zbiornikiem wyrównawczym 2. strefy -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 104: t = "Alarm zbiornik wyrównawczy 3. strefy jest niedostępny. Utrata połączenia ze zbiornikiem wyrównawczym 3. strefy -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 106: t = "Alarm sondy c.w.u.. W przypadku wbudowania kotła i oddzielnego zarządzania ciepłą wodą użytkową, czujnik zasobnika c.w.u. kontrolowany przez administratora wykazuje wartość rezystancji poza zakresem -> Instalacja nie może produkować ciepłej wody użytkowej przy użyciu pompy ciepła. Wytwarzanie ciepłej wody użytkowej zapewniane jest przez kocioł"; break;
+    case 120: t = "Alarm wysokiej nastawy dla osuszania 1 strefy. Obliczona nastawa wymagana przez 1. strefę jest zbyt wysoka w celu osuszenia -> Obliczona nastawa po stronie tłocznej przekracza dopuszczalną górną granicę osuszacza. Schłodzić pomieszczenie i zaczekać, aż punkt rosy powróci do dopuszczalnych wartości"; break;
+    case 121: t = "Alarm urządzenie 1. strefy jest niedostępne. Zdalne sterowanie lub zdalna kontrola 1. strefą jest niedostępne -> Sprawdzić, czy zdalne sterowanie jest włączone"; break;
+    case 122: t = "Alarm urządzenie 2. strefy jest niedostępne. Zdalne sterowanie lub zdalna kontrola 2. strefą jest niedostępne -> Sprawdzić, czy zdalne sterowanie jest włączone"; break;
+    case 123: t = "Alarm urządzenie 3. strefy jest niedostępne. Zdalne sterowanie lub zdalna kontrola 3. strefą jest niedostępne -> Sprawdzić, czy zdalne sterowanie jest włączone"; break;
+    case 125: t = "Nieprawidłowość czujnika temperatury otoczenia 1. strefy. Sonda temperatury otoczenia 1. strefy jest poza zakresem -> Oprócz temperatury, nie jest obliczany punkt rosy dla strefy"; break;
+    case 126: t = "Nieprawidłowość czujnika temperatury otoczenia 2. strefy. Sonda temperatury otoczenia 2. strefy jest poza zakresem -> Oprócz temperatury, nie jest obliczany punkt rosy dla strefy"; break;
+    case 127: t = "Nieprawidłowość czujnika temperatury otoczenia 3. strefy. Sonda temperatury otoczenia 3. strefy jest poza zakresem -> Oprócz temperatury, nie jest obliczany punkt rosy dla strefy"; break;
+    case 129: t = "Nieprawidłowość sondy wilgotności 1. strefy. Sonda temperatury wilgotności 1. strefy jest poza zakresem -> Oprócz wilgotności, nie jest obliczany punkt rosy dla strefy"; break;
+    case 130: t = "Nieprawidłowość sondy wilgotności 2. strefy. Sonda temperatury wilgotności 2. strefy jest poza zakresem -> Oprócz wilgotności, nie jest obliczany punkt rosy dla strefy"; break;
+    case 131: t = "Nieprawidłowość sondy wilgotności 3. strefy. Sonda temperatury wilgotności 3. strefy jest poza zakresem -> Oprócz wilgotności, nie jest obliczany punkt rosy dla strefy"; break;
+    case 132: t = "Alarm wysokiej nastawy dla osuszania 2. strefy. Obliczona nastawa wymagana przez 2. strefę jest zbyt wysoka w celu osuszenia -> Obliczona nastawa po stronie tłocznej przekracza dopuszczalną górną granicę osuszacza. Schłodzić pomieszczenie i zaczekać, aż punkt rosy powróci do dopuszczalnych wartości"; break;
+    case 133: t = "Alarm uszkodzenia osuszacza 1. strefy. Osuszacz 1. strefy jest w stanie alarmu -> Instalacja nie wykonuje osuszania w danej strefie"; break;
+    case 134: t = "Alarm uszkodzenia osuszacza 2. strefy. Osuszacz 2. strefy jest w stanie alarmu -> Instalacja nie wykonuje osuszania w danej strefie"; break;
+    case 135: t = "Alarm uszkodzenia osuszacza 3. strefy. Osuszacz 3. strefy jest w stanie alarmowym -> Instalacja nie wykonuje osuszania w danej strefie"; break;
+    case 137: t = "Alarm przywrócenia instalacji - Ponownie uruchomić instalację. Po operacji przywrócenia wykonanej za pomocą panelu sterowania, wyświetli się alarm w związku z koniecznością ponownego uruchomienia instalacji -> Wyłączyć i ponownie uruchomić instalację"; break;
+    case 138: t = "Wygrzewanie jastrychu w toku. Funkcja wygrzewania jastrychu w toku"; break;
+    case 139: t = "Odpowietrzanie w toku. Funkcja odpowietrzania w toku"; break;
+    case 177: t = "Alarm maksymalnego czasu c.w.u.. Żądanie ciepłej wody użytkowej zostało wykonane z przekroczeniem maksymalnego ustalonego czasu -> Instalacja kontynuuje pracę z nieoptymalną wydajnością"; break;
+    case 178: t = "Cykl antylegionella nie powiódł się. Cykl antylegionella nie zakończył się powodzeniem w ustalonym czasie -> Wcisnąć przycisk Reset"; break;
+    case 179: t = "Nieprawidłowość sondy fazy ciekłej. Sonda fazy ciekłej jest poza zakresem. -> Instalacja nie uruchamia się. Wezwać autoryzowaną firmę (np. Serwis Techniczny Immergas)."; break;
+    case 181: t = "Utrata połączenia ze zdalnym sterowaniem 2. strefy. Brak komunikacji między kartą a zdalnym sterowaniem 2. strefy. -> Należy odłączyć i ponownie włączyć moduł hydroniczny. Jeśli nawet przy ponownym włączeniu nie zostanie wykryte zdalne sterowanie, instalacja przechodzi do pracy lokalnej korzystając z poleceń obecnych na panelu sterowania. W tym przypadku nie można włączyć funkcji “Ogrzewanie”"; break;
+    case 182: t = "Alarm skraplarki. Występuje błąd skraplarki -> Instalacja nie działa, patrz nieprawidłowe działanie skraplarki i odpowiednią instrukcję obsługi"; break;
+    case 183: t = "Alarm skraplarki w trybie testmode. Skraplarka znajduje się w trybie TESTMODE -> W tej fazie nie jest możliwe spełnienie żądań klimatyzacji pomieszczeń i produkcji ciepłej wody użytkowej."; break;
+    case 184: t = "Alarm limitu czasu połączenia z jednostką zewnętrzną=. Utrata połączenia ze skraplarką -> Polecić sprawdzenie połączenia elektrycznego między urządzeniami"; break;
+    case 185: t = "Alarm połączenia modułu bezpieczeństwa. Utrata połączenia z modułem bezpieczeństwa -> Polecić sprawdzenie połączenia pomiędzy komponentami"; break;
+    case 186: t = "Nieprawidłowość wysokiego napięcia modułu zapłonowego. Moduł bezpieczeństwa: wystąpiła nieprawidłowość napięcia modułu zapłonowego -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 187: t = "Alarm sondy powrotu skraplarki. Czujnik powrotu skraplarki jest poza zakresem -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 188: t = "Żądanie poza zakresem działania. Żądanie nie może zostać wykonane, ponieważ warunki zewnętrzne nie pozwalają na włączenie skraplarki -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 189: t = "Alarm limitu czasu połączenia z płytą komunikacyjną. Utrata połączenia z płytą komunikacyjną skraplarki -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 191: t = "Utrata połączenia RF w kierunku CAR v2 RF 2.strefy. Połączenie między podstawą nadawczą a CAR v2 RF 2.strefy zostało utracone -> Sprawdzić działanie CAR Wireless, sprawdzić poziom naładowania baterii (patrz oddzielna instrukcja obsługi)."; break;
+    case 192: t = "Nieprawidłowość sondy wyjścia c.o. skraplarki. Sonda wyjścia c.o. skraplarki jest poza zakresem -> Gdy blokada lub nieprawidłowość wydłuża się, należy wezwać autoryzowaną firmę (na przykład Serwis Techniczny Immergas)."; break;
+    case 193: t = "Urządzenie w trybie Testmode. Urządzenie sterowane jest przez urządzenie zewnętrzne z użyciem protokołu Opentherm -> Instalacja kontynuuje prawidłową pracę"; break;
+    case 194: t = "Audax Pro jest wyłączona. Skraplarka Audax Pro została wyłączona -> Instalacja kontynuuje prawidłową pracę"; break;
+    case 195: t = "Nieprawidłowość niskiej temp. w fazie ciekłej. Temp. sondy fazy ciekłej jest za niska -> Sprawdzić prawidłowe działanie obwodu chłodniczego"; break;
+    case 196: t = "Blokada wysoka temp. zasilania. Wykryto zbyt wysoką temperaturę obwodu powrotnego pompy ciepła. -> Sprawdzić prawidłowe działanie obwodu chłodniczego"; break;
+    default: t = "Nieprawidłowość ogólna nierozpoznana"; break;
+
+  # entity names
+  n_tt_a11_outdoor_unit_model: "Immergas - A11 Model jednostki zewnętrznej"
+  n_tt_a12_venting: "Immergas - A12 Odpowietrzanie instalacji"
+  n_tt_bms_connection_switch: "Immergas - Połączenie BMS"
+  n_tt_cooling_active: "Immergas - Aktywne chłodzenie"
+  n_tt_cwu_water_heater: "Immergas - CWU"
+  n_tt_d03_dhw_temperatura_zasobnika: "Immergas - D03 Temperatura zasobnika c.w.u."
+  n_tt_d04_calc_flow_setpoint: "Immergas - D04 Zadana temperatura zasilania (wyliczona)"
+  n_tt_d06_oat: "Immergas - D06 Zewnętrzna temperatura otoczenia"
+  n_tt_d08_system_return_temp: "Immergas - D08 Temperatura wody powrotu pompy ciepła"
+  n_tt_d14_pump_flow_rate: "Immergas - D14 Natężenie przepływu pompy obiegowej"
+  n_tt_d20_system_flow_temp: "Immergas - D20 Temperatura zasilania instalacji"
+  n_tt_d24_refrigerant_liquid_phase_temp: "Immergas - D24 Temperatura fazy ciekłej obwodu chłodzenia"
+  n_tt_d61_model: "Immergas - D61 Model systemu"
+  n_tt_delta_t: "Immergas - Delta T"
+  n_tt_dhw_active: "Immergas - Aktywne CWU"
+  n_tt_eev_position: "Immergas - D77 Pozycja elektronicznego zaworu rozprężnego"
+  n_tt_error_active: "Immergas - Błąd aktywny"
+  n_tt_error_text: "Immergas - Błąd kotła (opis)"
+  n_tt_esphome_status: "Immergas - Status ESPHome"
+  n_tt_gas_boiler_running: "Immergas - Kocioł gazowy pracuje"
+  n_tt_gas_flow_est: "Immergas - Gaz szacowany przepływ"
+  n_tt_gas_rate_ch: "Immergas - Gaz zużycie CO (kalibracja)"
+  n_tt_gas_rate_dhw: "Immergas - Gaz zużycie CWU (kalibracja)"
+  n_tt_gas_reset: "Immergas - Gaz: wyzeruj licznik"
+  n_tt_gas_total: "Immergas - Gaz szacowane zużycie"
+  n_tt_heating_active: "Immergas - Aktywne CO"
+  n_tt_i03_max_wait_dhw: "Immergas - I03 Maks. czas oczekiwania na c.w.u."
+  n_tt_i04_max_wait_ch: "Immergas - I04 Maks. czas oczekiwania na c.o."
+  n_tt_i05_integration_mode: "Immergas - I05 Tryb aktywacji integracji"
+  n_tt_i07_activation_band: "Immergas - I07 Przedział aktywacji"
+  n_tt_i09_dhw_activation_temp: "Immergas - I09 Temperatura aktywacji c.w.u."
+  n_tt_mean_loop_temp: "Immergas - Temperatura średnia obiegu"
+  n_tt_operation_mode_select: "Immergas - Tryb pracy systemu"
+  n_tt_p15_legionella: "Immergas - P15 Funkcja anty-legionella"
+  n_tt_pdu_2100: "Immergas - Błąd kotła (kod)"
+  n_tt_pdu_3027: "Immergas - PDU 3027"
+  n_tt_pdu_3028: "Immergas - D22 Zawór 3-drożny (1=CWU)"
+  n_tt_pdu_3061: "Immergas - PDU 3061"
+  n_tt_pdu_4011: "Immergas - PDU 4011"
+  n_tt_pdu_4201: "Immergas - PDU 4201"
+  n_tt_pdu_4452: "Immergas - PDU 4452"
+  n_tt_pdu_4551: "Immergas - D74 Temperatura parownika"
+  n_tt_pdu_4554: "Immergas - D73 Temperatura tłoczenia sprężarki"
+  n_tt_pdu_4558: "Immergas - D71 Częstotliwość sprężarki"
+  n_tt_pdu_4585: "Immergas - D72 Temperatura sprężarki"
+  n_tt_pdu_4586: "Immergas - Stopień mocy sprężarki"
+  n_tt_pdu_4587: "Immergas - D76 Obroty wentylatora (kand.)"
+  n_tt_pdu_4588: "Immergas - PDU 4588"
+  n_tt_pdu_512: "Immergas - PDU 512"
+  n_tt_pdu_6002: "Immergas - PDU 6002"
+  n_tt_pdu_6014: "Immergas - PDU 6014"
+  n_tt_pdu_6503: "Immergas - PDU 6503"
+  n_tt_pdu_6504: "Immergas - PDU 6504"
+  n_tt_pdu_6505: "Immergas - D91 Wersja firmware P.C.B."
+  n_tt_pdu_6510: "Immergas - D61 Model systemu RAW"
+  n_tt_pdu_scan_btn_0_999: "Immergas - Skanuj PDU 0-999"
+  n_tt_pdu_scan_btn_10000_19999: "Immergas - Skanuj PDU 10000-19999"
+  n_tt_pdu_scan_btn_1000_1999: "Immergas - Skanuj PDU 1000-1999"
+  n_tt_pdu_scan_btn_2000_2999: "Immergas - Skanuj PDU 2000-2999"
+  n_tt_pdu_scan_btn_3000_3999: "Immergas - Skanuj PDU 3000-3999"
+  n_tt_pdu_scan_btn_4000_4999: "Immergas - Skanuj PDU 4000-4999"
+  n_tt_pdu_scan_btn_4300_4400: "Immergas - Skanuj PDU 4300-4400"
+  n_tt_pdu_scan_btn_5000_5999: "Immergas - Skanuj PDU 5000-5999"
+  n_tt_pdu_scan_btn_6000_6999: "Immergas - Skanuj PDU 6000-6999"
+  n_tt_pdu_scan_btn_7000_7999: "Immergas - Skanuj PDU 7000-7999"
+  n_tt_pdu_scan_btn_8000_8999: "Immergas - Skanuj PDU 8000-8999"
+  n_tt_pdu_scan_btn_9000_9999: "Immergas - Skanuj PDU 9000-9999"
+  n_tt_pdu_scan_btn_range: "Immergas - Skanuj zakres (od-do)"
+  n_tt_pdu_scan_btn_stop: "Immergas - Zatrzymaj skan PDU"
+  n_tt_pdu_scan_current_sensor: "Immergas - Skaner PDU - bieżący rejestr"
+  n_tt_pdu_scan_found_sensor: "Immergas - Skaner PDU - znalezione"
+  n_tt_pdu_scan_from: "Immergas - Skaner PDU - od"
+  n_tt_pdu_scan_input_func_switch: "Immergas - Skaner PDU - funkcja Input (0x04)"
+  n_tt_pdu_scan_last_result: "Immergas - Skaner PDU - ostatni wynik"
+  n_tt_pdu_scan_status: "Immergas - Skaner PDU - status"
+  n_tt_pdu_scan_to: "Immergas - Skaner PDU - do"
+  n_tt_pdu_scanner_mode_switch: "Immergas - Skaner PDU - tryb skanera"
+  n_tt_pump_max_speed_set: "Immergas - A04 Maksymalna stała prędkość"
+  n_tt_pump_min_speed_set: "Immergas - A03 Minimalna prędkość"
+  n_tt_restart: "Restart Immergas T+T Atom"
+  n_tt_secondary_gen_flow_temp: "Immergas - Temperatura zasilania generatora wtórnego (kocioł)"
+  n_tt_separator_delta: "Immergas - Różnica powrót PC - zasilanie kotła"
+  n_tt_status_boilera_raw: "Immergas - D98 Stan żądania kotła gazowego RAW (kand.)"
+  n_tt_status_boilera_text: "Immergas - D98 Stan żądania kotła gazowego"
+  n_tt_status_pompy_ciepla_raw: "Immergas - D97 Stan żądania pompy ciepła RAW (kand.)"
+  n_tt_status_pompy_ciepla_text: "Immergas - D97 Stan żądania pompy ciepła"
+  n_tt_sw_2102: "Immergas - Rejestr 2102 (RW 0-1)"
+  n_tt_sw_4449: "Immergas - Rejestr 4449 (RW 0-1)"
+  n_tt_sw_4453: "Immergas - I02 Integracja instalacji (AL)"
+  n_tt_sw_4454: "Immergas - I01 Integracja c.w.u. (AL)"
+  n_tt_sw_4600: "Immergas - Rejestr 4600 (RW 0-1)"
+  n_tt_system_state_raw: "Immergas - D99 Stan systemu RAW"
+  n_tt_system_state_text: "Immergas - D99 Stan systemu"
+  n_tt_t02_dhw_thermostat: "Immergas - T02 Termostat c.w.u."
+  n_tt_t04_unknown: "Immergas - T04 (parametr nieopisany)"
+  n_tt_t05_time_between_ignitions_set: "Immergas - T05 Zegary czasowe uruchamiania"
+  n_tt_thermal_lift: "Immergas - Lift termiczny (zasilanie - zewn.)"
+  n_tt_thermal_power: "Immergas - Moc cieplna szacowana"
+  n_tt_tryb_pracy_raw: "Immergas - Tryb pracy RAW"
+  n_tt_zadana_temperatura_cwu: "Immergas - Zadana temperatura CWU"
+  n_tt_zegar_wewnetrzny: "Immergas - Zegar wewnętrzny"
+  n_tt_zone1_max_ch_set: "Immergas - R04 Maksymalne c.o. strefy 1"
+  n_tt_zone1_max_cool_set: "Immergas - R13 Maksymalne chłodzenie strefy 1"
+  n_tt_zone1_min_ch_set: "Immergas - R05 Minimalne c.o. strefy 1"
+  n_tt_zone1_min_cool_set: "Immergas - R12 Minimalne chłodzenie strefy 1"
+  n_tt_zone_1_thermostat_enable: "Immergas - Termostat Strefa 1 enable"

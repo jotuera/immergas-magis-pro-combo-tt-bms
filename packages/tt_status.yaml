@@ -1,0 +1,280 @@
+# Immergas Magis Pro / Combo T-/T+ BMS - package "tt_status"
+# Status: operating mode (2000), D97/D98/D99 demand/system state, boiler fault code + description, A11, D61, D91, internal clock.
+# Part of jotuera/immergas-magis-pro-combo-tt-bms (MIT). Loaded by the main YAML through `packages:`.
+# File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
+
+sensor:
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_tryb_pracy_raw}"
+    id: tt_tryb_pracy_raw
+    internal: true
+    register_type: holding
+    address: 2000
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_status_pompy_ciepla_raw}"
+    id: tt_status_pompy_ciepla_raw
+    register_type: holding
+    address: 6500
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_status_boilera_raw}"
+    id: tt_status_boilera_raw
+    register_type: holding
+    address: 6501
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_system_state_raw}"
+    id: tt_system_state_raw
+    register_type: holding
+    address: 6502
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  # Found by T-/T+ scan 2000-2999.
+  # Read individually - do not join the previous range (2101 does not exist).
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_pdu_2100}"
+    id: tt_pdu_2100
+    register_type: holding
+    address: 2100
+    value_type: U_WORD
+    reuse_previous_range: false
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_a11_outdoor_unit_model}"
+    id: tt_a11_outdoor_unit_model
+    register_type: holding
+    address: 4202
+    value_type: U_WORD
+    unit_of_measurement: "kW"
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms_diag
+    name: "${n_tt_pdu_6505}"
+    id: tt_pdu_6505
+    icon: mdi:chip
+    register_type: holding
+    address: 6505
+    value_type: U_WORD
+    entity_category: diagnostic
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms_diag
+    name: "${n_tt_pdu_6510}"
+    id: tt_pdu_6510
+    internal: true
+    register_type: holding
+    address: 6510
+    value_type: U_WORD
+    accuracy_decimals: 0
+    on_value:
+      - component.update: tt_d61_model
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    id: tt_pdu_6506
+    internal: true
+    register_type: holding
+    address: 6506
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    id: tt_pdu_6507
+    internal: true
+    register_type: holding
+    address: 6507
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+text_sensor:
+  - platform: template
+    name: "${n_tt_status_pompy_ciepla_text}"
+    id: tt_status_pompy_ciepla_text
+    icon: mdi:heat-pump-outline
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(tt_status_pompy_ciepla_raw).state)) {
+        return {"${t_tt_unknown}"};
+      }
+      int v = (int) id(tt_status_pompy_ciepla_raw).state;
+
+      if (v == 300) return {"${t_tt_d97_300}"};
+      if (v == 332) return {"${t_tt_d97_332}"};
+      if (v == 352) return {"${t_tt_d97_352}"};
+      if (v == 390) return {"${t_tt_d97_390}"};
+      if (v == 322) return {"${t_tt_d97_322}"};
+      if (v == 342) return {"${t_tt_d97_342}"};
+      if (v == 336) return {"${t_tt_d97_336}"};
+      return {std::string("${t_tt_unknown_raw}") + std::to_string(v)};
+
+  - platform: template
+    name: "${n_tt_status_boilera_text}"
+    id: tt_status_boilera_text
+    icon: mdi:water-boiler
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(tt_status_boilera_raw).state)) {
+        return {"${t_tt_unknown}"};
+      }
+      int v = (int) id(tt_status_boilera_raw).state;
+
+      if (v == 200) return {"${t_tt_d98_200}"};
+      if (v == 215) return {"${t_tt_d98_215}"};
+      if (v == 232) return {"${t_tt_d98_232}"};
+      if (v == 252) return {"${t_tt_d98_252}"};
+      if (v == 236) return {"${t_tt_d98_236}"};
+      return {std::string("${t_tt_unknown_raw}") + std::to_string(v)};
+
+  - platform: template
+    name: "${n_tt_system_state_text}"
+    id: tt_system_state_text
+    icon: mdi:state-machine
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(tt_system_state_raw).state)) {
+        return {"${t_tt_unknown}"};
+      }
+      int v = (int) id(tt_system_state_raw).state;
+
+      if (v == 0) return {"${t_tt_d99_0}"};
+      if (v == 1) return {"${t_tt_d99_1}"};
+      if (v == 6) return {"${t_tt_d99_6}"};
+      if (v == 7) return {"${t_tt_d99_7}"};
+      if (v == 8) return {"${t_tt_d99_8}"};
+      if (v == 41) return {"${t_tt_d99_41}"};
+      if (v == 44) return {"${t_tt_d99_44}"};
+      if (v == 45) return {"${t_tt_d99_45}"};
+      if (v == 61) return {"${t_tt_d99_61}"};
+      if (v == 62) return {"${t_tt_d99_62}"};
+      if (v == 64) return {"${t_tt_d99_64}"};
+      if (v == 82) return {"${t_tt_d99_82}"};
+      return {std::string("${t_tt_code}") + std::to_string(v)};
+
+  - platform: template
+    name: "${n_tt_error_text}"
+    id: tt_error_text
+    icon: mdi:alert-circle-outline
+    update_interval: 30s
+    lambda: |-
+      int c = isnan(id(tt_pdu_2100).state) ? 0 : (int) id(tt_pdu_2100).state;
+      if (c == 0) return std::string("${t_tt_no_faults}");
+      std::string t;
+      switch (c) {
+        ${l_tt_fault_cases}
+      }
+      char pfx[12];
+      snprintf(pfx, sizeof(pfx), "E%02d: ", c);
+      std::string s = std::string(pfx) + t;
+      if (s.size() > 250) {
+        size_t cut = s.rfind(' ', 250);
+        if (cut == std::string::npos || cut < 200) cut = 250;
+        s = s.substr(0, cut) + "...";
+      }
+      return s;
+
+  # D61 (reg. 6510) - system model definition.
+  - platform: template
+    name: "${n_tt_d61_model}"
+    id: tt_d61_model
+    icon: mdi:information-outline
+    entity_category: diagnostic
+    update_interval: never   # refreshed right after reg. 6510 is read (on_value)
+    lambda: |-
+      if (isnan(id(tt_pdu_6510).state)) return {};
+      switch ((int) id(tt_pdu_6510).state) {
+        case 1: return {"Magis Pro (MP)"};
+        case 2: return {"Magis Combo (MCI)"};
+        case 3: return {"Magis Combo Plus (MCP)"};
+        case 4: return {"Magis Pro High Power (MPH)"};
+        case 5: return {"Magis Combo High Power (MCH)"};
+        case 6: return {"Magis Combo Plus High Power (MCPH)"};
+        default: return {std::string("${t_tt_code}") + std::to_string((int) id(tt_pdu_6510).state)};
+      }
+
+  - platform: template
+    name: "${n_tt_zegar_wewnetrzny}"
+    id: tt_zegar_wewnetrzny
+    icon: mdi:clock-outline
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(tt_pdu_6506).state) || isnan(id(tt_pdu_6507).state)) {
+        return {"--:--"};
+      }
+      char buf[8];
+      snprintf(buf, sizeof(buf), "%02d:%02d", (int) id(tt_pdu_6506).state, (int) id(tt_pdu_6507).state);
+      return {std::string(buf)};
+
+binary_sensor:
+  - platform: template
+    name: "${n_tt_error_active}"
+    id: tt_error_active
+    icon: mdi:alert
+    device_class: problem
+    lambda: |-
+      if (isnan(id(tt_pdu_2100).state)) return false;
+      return (int) id(tt_pdu_2100).state != 0;
+
+  - platform: template
+    name: "${n_tt_heating_active}"
+    id: tt_heating_active
+    icon: mdi:radiator
+    lambda: |-
+      if (isnan(id(tt_tryb_pracy_raw).state)) {
+        return false;
+      }
+      return (int) id(tt_tryb_pracy_raw).state == 3;
+
+  - platform: template
+    name: "${n_tt_cooling_active}"
+    id: tt_cooling_active
+    icon: mdi:snowflake
+    lambda: |-
+      if (isnan(id(tt_tryb_pracy_raw).state)) {
+        return false;
+      }
+      return (int) id(tt_tryb_pracy_raw).state == 2;
+
+  - platform: template
+    name: "${n_tt_dhw_active}"
+    id: tt_dhw_active
+    icon: mdi:water-boiler
+    lambda: |-
+      if (isnan(id(tt_tryb_pracy_raw).state)) {
+        return false;
+      }
+      return (int) id(tt_tryb_pracy_raw).state == 1;
+
+select:
+  # Operating-mode control over the T-/T+ BMS.
+  # Register 2000 reads stably. Write with caution - test individually.
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_operation_mode_select}"
+    id: tt_operation_mode_select
+    address: 2000
+    value_type: U_WORD
+    optionsmap:
+      "${t_tt_mode_standby}": 0
+      "${t_tt_mode_summer}": 1
+      "${t_tt_mode_cooling}": 2
+      "${t_tt_mode_winter}": 3

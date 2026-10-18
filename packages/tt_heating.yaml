@@ -1,0 +1,76 @@
+# Immergas Magis Pro / Combo T-/T+ BMS - package "tt_heating"
+# Zone 1 heating/cooling limits R04/R05/R12/R13 and the zone 1 thermostat enable (2010).
+# Part of jotuera/immergas-magis-pro-combo-tt-bms (MIT). Loaded by the main YAML through `packages:`.
+# File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
+
+switch:
+  # Zone 1 thermostat (bit0 of reg 2010) — control. Writes to BMS, use deliberately.
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_zone_1_thermostat_enable}"
+    id: tt_zone_1_thermostat_enable
+    register_type: holding
+    address: 2010
+    bitmask: 1
+    entity_category: config
+
+number:
+  # R05 — Zone 1 min CH temperature. Register reads stably.
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_zone1_min_ch_set}"
+    id: tt_zone1_min_ch_set
+    register_type: holding
+    address: 4350
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    min_value: 20
+    max_value: 45
+    step: 1
+    mode: slider
+
+  # R04 — Zone 1 max CH temperature. Register reads stably.
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_zone1_max_ch_set}"
+    id: tt_zone1_max_ch_set
+    register_type: holding
+    address: 4351
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    min_value: 25
+    max_value: 60
+    step: 1
+    mode: slider
+
+  # R13 — Zone 1 max cooling temperature. Register reads stably.
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_zone1_max_cool_set}"
+    id: tt_zone1_max_cool_set
+    register_type: holding
+    address: 4356
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    min_value: 7
+    max_value: 25
+    step: 1
+    mode: slider
+
+  # R12 — Zone 1 min cooling temperature. Register reads stably.
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_zone1_min_cool_set}"
+    id: tt_zone1_min_cool_set
+    register_type: holding
+    address: 4357
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    min_value: 5
+    max_value: 20
+    step: 1
+    mode: slider

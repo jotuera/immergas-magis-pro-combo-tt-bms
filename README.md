@@ -2,58 +2,102 @@
 
 Read and control an **Immergas Magis Pro / Combo** (Audax heat pump) over the **T-/T+ (BMS) Modbus RS485** bus using an **M5Stack Atom + ESPHome**, integrated into Home Assistant.
 
-This is a community reverse-engineering project — Immergas does not publish the Modbus register map for this bus, so the map below was recovered by scanning + cross-referencing the Magis Combo installer manual, live logging of operating cycles, and the Samsung EHS/NASA documentation.
+This is a community reverse-engineering project. Immergas does not publish the Modbus register map for this bus, so the map below was recovered by scanning, cross-referencing the Magis Combo installer manual, live logging of operating cycles and comparing with the Samsung NASA (F1/F2) bus.
+
+Sister projects (same author, designed to run together on one device later):
+- [immergas-magis-pro-combo-dd-modbus](https://github.com/jotuera/immergas-magis-pro-combo-dd-modbus) — Dominus / zone-panel emulator on the D+/D- bus
+- [immergas-magis-pro-combo-f1f2-nasa](https://github.com/jotuera/immergas-magis-pro-combo-f1f2-nasa) — Samsung NASA reader on the F1/F2 bus
 
 ## Hardware
 
-- **M5Stack Atom Lite** (ESP32) + isolated **RS485** transceiver (e.g. MAX3485 / M5 Isolated RS485 Unit)
+- **M5Stack Atom Lite** (ESP32) + **RS485** transceiver (e.g. MAX3485 / M5 RS485 unit)
 - Wiring: Immergas **T+ / T-** → RS485 **A / B** (swap A/B if you get CRC errors)
-- Bus: **Modbus RTU, slave 11, 9600 8N2**, 2-wire (the Immergas manual specifies 8N2; it also reads fine on 8N1 receivers, so either works)
+- Bus: **Modbus RTU, slave 11, 9600 8N2**, 2-wire (the Immergas manual specifies 8N2; 8N1 receivers also work)
 - Tested on: **Magis Combo 9 Plus V2** (Audax 9, 9 kW, firmware D91 = 6.0) and **Magis Pro V2** (community-confirmed)
 - The Atom is the Modbus **master**; the heat pump is slave 11.
 
-## What's new in v1.1.0
+## What's new in v2.0.0
 
-- **Gas / heat-pump integration settings are now controllable from Home Assistant**: I01 DHW integration, I02 system integration, I03 / I04 max wait times, I05 activation mode (AU/MA), I07 activation band, I09 DHW activation temperature.
-- **More installer settings as controls**: T02 DHW thermostat, T04, P15 anti-legionella, A12 system vent. Every one of them was decoded by changing it on the unit's keypad and then verified by writing it back from HA.
-- New read-outs: **D61 system model** (e.g. *Magis Combo Plus (MCP)*) and **D91 P.C.B. software version** (e.g. *6.0*).
-- 4452 renamed to `PDU 4452` — it is a constant setting, not a refrigerant temperature.
-- ESPHome 2026.9+ cleanup: `command_throttle` removed, `force_new_range` → `reuse_previous_range`; no more deprecation warnings.
-- The ESPHome `project` block is set, so Home Assistant shows the device model as *immergas-magis-pro-combo-tt-bms*.
+- **Modular config.** The single 1300-line YAML is split into packages (`packages/tt_*.yaml`) that ESPHome downloads from GitHub. You copy only the short main file and choose which features you want. The separate `-beta.yaml` is gone; the PDU scanner is now an optional package (`tt_scanner.yaml`).
+- **Languages:** entity names and texts come from one language file: `packages/lang/tt_en.yaml` (English) or `packages/lang/tt_pl.yaml` (Polski). Any single name can be overridden in `substitutions:`.
+- **Estimated gas consumption** (`tt_gas.yaml`): boiler run time × calibrated m³/h for CH and DHW, as a `total_increasing` m³ counter for the Home Assistant Energy dashboard.
+- **Newly decoded:** 4554 = **D73 compressor discharge temperature**, 4585 = **D72 compressor temperature** (both match the Samsung NASA values to 0.1 °C), 4586 = **compressor power step 0-6** (not an on/off flag).
+- **New status codes:** D99 7 / D97 336 / D98 236 (heating by the boiler only, heat pump excluded by I10), D99 44 (end of DHW on the heat pump), D99 61 = **DHW on the heat pump** (not "solar boost"), D98 215 = boiler heating (cycle).
+- "Heating active" / "Cooling active" no longer use the `heat` / `cold` device classes, so they show on/off like "DHW active".
+- File names and ids start with `tt_` so this repo never clashes with the D+/D- and F1/F2 projects.
 
-⚠️ Upgrading from 1.0.0: the registers that became controls (4402, 4403, 4411, 4451, 4453, 4454, 4455, 4468, 4469, 4479, 6013) and the renamed read-outs show up as **new entities** in Home Assistant; the old `PDU …` / `Register … (RW 0-1)` entities become unavailable and can be removed.
+⚠️ **Upgrading from 1.x:**
+- **Rename:** three read-outs were renamed and show up as **new entities**: `Refrigerant hot-side temperature (cand.)` → `D73 Compressor discharge temperature`, `Refrigerant circuit 4585 (cand. temp D72-74)` → `D72 Compressor temperature`, `Compressor running` → `Compressor power step`. Delete the old ones in HA.
+- **Unchanged:** all other entity names are the same, so their history continues.
+- **Switching:** replace your YAML with the new main file. Copy your Wi-Fi / static IP settings into it and keep the same `device_name`.
+
+## Project structure
+
+```
+immergas-magis-pro-combo-tt-bms.yaml   main file: device, Wi-Fi, API + list of packages (the only file you copy)
+packages/
+  tt_core.yaml          UART, Modbus, the two polling controllers, "BMS connection" switch      (required)
+  tt_status.yaml        operating mode, D97/D98/D99, boiler fault code + text, A11, D61, D91,    (required)
+                        internal clock, "Heating/Cooling/DHW active"
+  tt_circuit.yaml       D20/D08 flow/return, boiler flow (3029), D14, D06, D04, D22 3-way valve  (required)
+  tt_heat_pump.yaml     D24, D71 frequency, D72/D73/D74, D76 fan, D77 EEV, compressor power step
+  tt_dhw.yaml           D03 tank temperature, DHW water_heater (2095), T02
+  tt_heating.yaml       zone 1 limits R04/R05/R12/R13, zone 1 thermostat enable (2010)
+  tt_integration.yaml   menu I: I01, I02, I03, I04, I05, I07, I09
+  tt_installer.yaml     P15, A12, A03/A04 pump speed, T04, T05
+  tt_computed.yaml      Delta T, thermal power, mean loop temperature, thermal lift, HP return - boiler flow
+  tt_gas.yaml           estimated gas consumption (needs tt_status + tt_circuit)
+  tt_diagnostics.yaml   undecoded registers + undocumented writable 0/1 registers
+  tt_scanner.yaml       optional active PDU scanner
+  lang/tt_en.yaml       English names/texts
+  lang/tt_pl.yaml       Polish names/texts
+```
+
+To drop a feature, delete its line from `packages:` in the main file. `tt_core`, `tt_status` and `tt_circuit` are always needed.
+
+## Setup
+
+1. Copy `immergas-magis-pro-combo-tt-bms.yaml` into ESPHome (dashboard → new device → paste) and `secrets.yaml.example` → `secrets.yaml` (Wi-Fi, fallback AP password).
+2. Pick the language line (`packages/lang/tt_en.yaml` or `tt_pl.yaml`). If your RS485 pins differ, set `tt_uart_tx_pin` / `tt_uart_rx_pin` / `tt_uart_de_pin` in `substitutions:`.
+3. Install with **ESPHome 2026.9 or newer**, then adopt the device in Home Assistant.
+4. To upgrade later, change `ref: v2.0.0` to a newer tag (or `main` for the development version).
 
 ## What it does
 
-- **Reads**: flow/return/DHW/outdoor temperatures, **calculated flow setpoint (D04)**, compressor frequency, evaporator temperature, EEV position, outdoor fan speed, refrigerant-circuit temps, 3-way valve position, heat-pump/boiler/system status, fault code, system model (D61), firmware version (D91).
-- **Controls**: operating mode (2000), DHW setpoint (2095), zone-1 heating/cooling limits (R04/R05/R12/R13), circulation pump min/max speed (A03/A04), zone-1 thermostat, **gas/heat-pump integration (I01–I09)**, T02, T04, T05, P15 anti-legionella, A12 system vent.
-- **Decoded boiler fault** (114 Immergas anomaly codes), **calculated metrics** (Delta T, mean loop temp, thermal lift, heat-pump return − boiler flow difference).
+- **Reads:** flow/return/DHW/outdoor temperatures, **calculated flow setpoint (D04)**, compressor frequency and power step, compressor/discharge/evaporator temperatures, EEV position, outdoor fan speed, 3-way valve position, heat-pump/boiler/system status, fault code + description, system model (D61), firmware version (D91).
+- **Controls:** operating mode (2000), DHW setpoint (2095), zone-1 heating/cooling limits (R04/R05/R12/R13), circulation pump min/max speed (A03/A04), zone-1 thermostat, **gas/heat-pump integration (I01–I09)**, T02, T04, T05, P15 anti-legionella, A12 system vent.
+- **Calculated:** Delta T, mean loop temperature, thermal lift, heat-pump return − boiler flow difference, **estimated gas consumption**.
 - BMS connection toggle (start/stop polling).
 
-## Requirements
+## Estimated gas consumption
 
-- **ESPHome 2026.9 or newer.** From 2026.9 the frame spacing is set by the `modbus` hub (`turnaround_time`, default **600 ms**); `command_throttle` on the controllers no longer does anything. The config sets `turnaround_time: 80ms` so writes from Home Assistant stay fast. (v1.0.0 still produced harmless deprecation warnings for `command_throttle` / `force_new_range`; v1.1.0 no longer does.)
+The unit does not report gas use, so `tt_gas.yaml` counts the time the gas boiler runs and multiplies it by an average m³/h, with separate rates for CH and DHW.
+- **When it counts:** boiler running = D99 62 (DHW on gas), D98 215/236 or D99 7 (CH by the boiler). In heating (D99 6/8) it also counts while the boiler flow is at least 8 K above the heat-pump return. Normal heat-pump heating (D98 252) is not counted.
+- **Calibration:** read your gas meter at the start and end of a week. Divide the real m³ by the increase of `Gas estimated consumption`, then multiply both rates (`Gas consumption CH/DHW (calibration)`) by that factor.
+- **Energy dashboard:** add `Gas estimated consumption` under Settings → Dashboards → Energy → Gas consumption. If the counter ever jumps or is reset, check the gas cost statistic (Developer tools → Statistics) for a spike.
 
 ## ⚠️ Important caveats
 
-- **Operating mode — whoever keeps asserting it wins.** An *emulated* zone panel on the D+/D- bus re-asserts its mode continuously and reverts any mode written via T-/T+ (register 2000). With a *real* Dominus panel the opposite was observed (firmware 6.0): once a mode has been written over T-/T+, the unit holds it as the BMS command and reverts mode changes made on the indoor-unit keypad or on the Dominus. With a T-/T+ master running, change the mode from Home Assistant.
-- **Probes not fitted read `-32768` (0x8000).** E.g. register 3029 (boiler flow) on a heat-pump-only Magis Pro. All temperature sensors map this to *unknown* instead of showing −3276.8 °C.
-- **Thermostat input 40-1/41 and register 2010.** On a Magis Combo with **firmware 6.0 and A31 = RPT**, an actively polling T-/T+ master does **not** block the zone thermostat — heat calls start the compressor normally. A user with **firmware 4.3 and A31 = RT** reports that an active master blocks the 40-1/41 input and that writing `2010 = 1` has no effect ([issue #1](https://github.com/jotuera/immergas-magis-pro-combo-tt-bms/issues/1)). Both firmware and A31 differ between the two cases, so the cause is not pinned down yet — please report your D91 + A31 if you test this.
+- **Operating mode: whoever keeps asserting it wins.** An *emulated* zone panel on D+/D- re-asserts its mode continuously and reverts any mode written via T-/T+ (register 2000). With a *real* Dominus panel (firmware 6.0), the unit holds a mode written over T-/T+ as the BMS command. It then reverts mode changes made on the keypad or on the Dominus. With a T-/T+ master running, change the mode from Home Assistant.
+- **Thermostat input 40-1/41 needs a zone 1 panel on D+/D-.** On firmware 6.0, with the BMS master polling, a thermostat contact on 40-1/41 starts heating **only** when a zone 1 panel is present on D+/D-: the real Dominus panel (A31 = RPT) or the [dd-modbus emulator](https://github.com/jotuera/immergas-magis-pro-combo-dd-modbus). Without it the contact is ignored, and register 2010 doesn't help (two users on fw 4.3 and 6.0). Reports of 2010 working come from firmware 8.3+. See [issue #1](https://github.com/jotuera/immergas-magis-pro-combo-tt-bms/issues/1).
+- **Probes not fitted read `-32768` (0x8000),** e.g. register 3029 (boiler flow) on a heat-pump-only Magis Pro. All temperature sensors map this to *unknown*.
 
 ## Bus facts
 
-- The unit answers **only Modbus function 0x03 (read holding registers)**. Functions 0x01 (coils), 0x02 (discrete inputs) and 0x04 (input registers) are rejected (illegal function).
-- Register banks: **2xxx** (config/control), **3xxx** (sensors), **4xxx** (heat pump / refrigerant), **6xxx** (parameters / statuses). The whole range **0–19999** has been scanned; nothing answers above 6510.
-- The map is fixed — entering the installer PIN on the indoor unit does **not** expose more registers. Heating-curve breakpoints (R02/R03) and most other menu parameters are **not** available on this bus.
-- The **44xx** bank holds integration / installer settings (menus I, T, P), the **65xx** bank holds info read-outs (menu D: D97–D99, D61, D91, internal clock).
-- Settings confirmed **not** exposed on T-/T+ (changed on the unit, no register moved): I08, I10, P07 (but D06 reads *after* the P07 correction), P11, P13, P21, P23, P24, T09, T23, U11, A05, A18, A31, A41, maintenance menu M (M13, M15–M17). Zone remote-panel settings (time programs, room-probe modulation, dew-point correction, anti-freeze temperature…) live on the D+/D- bus, not here.
-- Entering the maintenance menu **M** sets fault code **193** (E193 "test mode") in register 2100 until you leave it.
-- Immergas "PDU N" = holding register address N.
+- **Function codes:** the unit answers **only Modbus function 0x03**. Functions 0x01, 0x02 and 0x04 are rejected (illegal function). Writes use 0x06.
+- **Register banks:** **2xxx** (config/control), **3xxx** (sensors), **4xxx** (heat pump / refrigerant), **6xxx** (parameters / statuses). The whole range **0–19999** has been scanned; nothing answers above 6510.
+- **No Victrix / Magis M TOP interface:** the low BMS registers from the Victrix and Magis M TOP manuals are not available on the Magis V2 (fw 6.0). 512 is **read-only** (a write returns exception 2), 256 and the 0x04 input registers don't exist, and 61440–61442 (Modbus config) return exception 2. There is no BMS heat request and no BMS "silent mode" on this bus.
+- **Fixed map:** entering the installer PIN does **not** expose more registers. Heating-curve breakpoints (R02/R03) and most menu parameters are not on this bus.
+- **Menu banks:** the **44xx** bank holds integration / installer settings (menus I, T, P). The **65xx** bank holds info read-outs (menu D: D97–D99, D61, D91, internal clock).
+- **Settings not exposed on T-/T+** (changed on the unit, no register moved): I08, I10, P07 (but D06 reads *after* the P07 correction), P11, P13, P21, P23, P24, T09, T23, **U11 night function** (it goes to the outdoor unit as a 30 % frequency limit on D+/D-, not here), A05, A18, A31, A41, maintenance menu M (M13, M15–M17). Zone remote-panel settings live on the D+/D- bus.
+- **Maintenance menu:** entering menu **M** sets fault code **193** (E193 "test mode") in register 2100 until you leave it.
+- **Naming:** Immergas "PDU N" = holding register address N.
 
 ## Register map (known)
 
 | Reg | Code | Description | Scale |
 |---|---|---|---|
+| 512 | — | Read-only on the Magis V2 (always 0 since Oct 2026; 280/2000 seen once in June) | — |
 | 2000 | — | Operating mode (0=standby, 1=summer/DHW, 2=cooling, 3=winter) | RW |
 | 2010 | — | Zone 1 thermostat / heating request (bit0) — see caveat above | RW |
 | 2095 | D05 | DHW setpoint | ×0.1 °C, RW |
@@ -61,76 +105,79 @@ This is a community reverse-engineering project — Immergas does not publish th
 | 3000 | D20 | System flow temperature | ×0.1 °C |
 | 3001 | D08 | Heat pump return water temperature | ×0.1 °C |
 | 3002 | D06 | Outdoor temperature | ×0.1 °C |
-| 3003 | D04 | **Calculated flow setpoint** from the heating curve; 0 = no heat demand (earlier versions mislabelled it as R08) | ×0.1 °C |
+| 3003 | D04 | **Calculated flow setpoint** from the heating curve; 0 = no heat demand | ×0.1 °C |
 | 3016 | D03 | Storage tank unit temperature | ×0.1 °C |
+| 3027 | — | Candidate: 1 = heat pump excluded / heating by the boiler only (seen once, I10 test) | 0/1 |
 | 3028 | D22 | Generator 3-way valve (1 = DHW, 0 = CH) | 0/1 |
-| 3029 | — | **Secondary generator (gas boiler) flow temperature** — reaches ~65 °C during DHW on gas; `-32768` on units without a boiler (earlier versions called it D23) | ×0.1 °C |
+| 3029 | — | **Secondary generator (gas boiler) flow temperature**; `-32768` on units without a boiler | ×0.1 °C |
 | 3054 | D14 | Circulator pump flow rate (0 while the pump is stopped) | l/h |
 | 3056 | D24 | Chiller circuit liquid temperature | ×0.1 °C |
 | 4202 | A11 | Outdoor Unit model | code (9 = 9 kW) |
+| 4350 | R05 | Zone 1 minimum central heating | °C, RW |
+| 4351 | R04 | Zone 1 maximum central heating | °C, RW |
+| 4356 | R13 | Zone 1 maximum cooling | °C, RW |
+| 4357 | R12 | Zone 1 minimum cooling | °C, RW |
 | 4402 | T02 | DHW thermostat (DHW switch-on differential) | °C, RW |
 | 4403 | P15 | Anti-legionella function | 0/1, RW |
 | 4411 | T04 | (not described in any Immergas manual) | RW |
 | 4451 | I05 | Integration activation mode (0 = AU automatic, 1 = MA manual) | RW |
 | 4453 | I02 | System (CH) integration enabling (1 = AL, 0 = OFF) | 0/1, RW |
 | 4454 | I01 | DHW integration enabling (1 = AL, 0 = OFF) | 0/1, RW |
-| 4455 | I09 | DHW activation temperature (outdoor temp below which DHW integration is enabled) | °C, signed, RW |
+| 4455 | I09 | DHW activation temperature | °C, signed, RW |
 | 4468 | I04 | Central heating max wait time | min, RW |
 | 4469 | I03 | DHW max wait time | min, RW |
 | 4479 | I07 | Activation band | °C, RW |
-| 4350 | R05 | Zone 1 minimum central heating | °C, RW |
-| 4351 | R04 | Zone 1 maximum central heating | °C, RW |
-| 4356 | R13 | Zone 1 maximum cooling | °C, RW |
-| 4357 | R12 | Zone 1 minimum cooling | °C, RW |
-| 4551 | D74 | **Evaporator (outdoor coil) temperature** — drops below outdoor temp while heating; can be negative | ×0.1 °C, signed |
-| 4554 | — | Refrigerant hot-side temperature (candidate) | ×0.1 °C |
+| 4551 | D74 | **Evaporator (outdoor coil) temperature** (= NASA 0x8218) | ×0.1 °C, signed |
+| 4554 | D73 | **Compressor discharge temperature** (= NASA 0x820A) | ×0.1 °C |
 | 4557 | D77 | Electronic expansion valve (EEV) position (2000 = fully open at rest) | 0–2000 |
-| 4558 | D71 | **Compressor frequency** (ramps ~15 → 30 Hz at start) | Hz |
-| 4586 | — | **Compressor running** | 0/1 |
-| 4587 | D76 | Outdoor unit fan speed (candidate; 450 while running) | rpm |
+| 4558 | D71 | **Compressor frequency** | Hz |
+| 4585 | D72 | **Compressor temperature** (top, = NASA 0x8280) | ×0.1 °C |
+| 4586 | — | **Compressor power step** 0–6 (25 Hz = 1, 30 = 2, 43 = 3, 51 = 4, 58 = 5, 61 = 6) | step |
+| 4587 | D76 | Outdoor unit fan speed (candidate) | rpm |
 | 6000 | T05 | Central heating ignitions timer | RW |
 | 6010 | A03 | Circulation pump minimum speed | %, RW |
 | 6011 | A04 | Circulation pump maximum speed | %, RW |
 | 6013 | A12 | System vent (automatic venting at power-up) | 0/1, RW |
-| 6500 | D97 | Heat pump demand status: 300 = standby, 352 = heating, 322 = DHW (heat pump), 342 = cooling | 0–999 |
-| 6501 | D98 | Thermal generator demand status: 200 = standby, 252 = heating | 0–999 |
+| 6500 | D97 | Heat pump demand status — see below | 0–999 |
+| 6501 | D98 | Thermal generator demand status — see below | 0–999 |
 | 6502 | D99 | System state — see below | 0–999 |
 | 6505 | D91 | P.C.B. software version (60 = 6.0, 83 = 8.3) | ×0.1 |
 | 6506/6507 | D140/D141 | Internal RTC hour / minute (read-only) | h / min |
 | 6510 | D61 | System model: 1 = MP, 2 = MCI, 3 = MCP, 4 = MPH, 5 = MCH, 6 = MCPH | code |
 
-All RW settings in the 44xx / 60xx rows were verified both ways: changing them on the unit's keypad moves the register, and writing them from Home Assistant changes the value on the unit.
+All RW settings in the 44xx / 60xx rows were verified both ways: changing them on the keypad moves the register, and writing them from Home Assistant changes the value on the unit.
 
-**D99 system state codes:** 0 / 82 = standby · 1 = cooling request · 6 = heating request · 8 = heating cycle (seen just before switching to DHW) · 41 = pump overrun after a CH cycle (~3 min) · 45 = end of DHW (~1 min) · 61 = DHW with solar boost · 62 = DHW on the gas boiler (Combo only) · 64 = DHW with the electric heater. DHW codes may depend on model and firmware — one unit on firmware 4.3 reports plain DHW as 61.
+**D97 heat pump demand:** 300 standby · 332/390 heating · 352 heating (thermostat call) · 322 DHW on the heat pump (fw 4.3) · 342 cooling request · 336 excluded by the I10 threshold (boiler heats).
+**D98 thermal generator demand:** 200 standby · 215 boiler heating (cycle) · 232 heating · 252 heating (thermostat call, boiler not firing) · 236 heating by the boiler only.
+**D99 system state:** 0 / 82 standby · 1 cooling request · 6 heating request · 7 heating by the boiler only (heat pump excluded by I10) · 8 heating cycle · 41 pump overrun after CH (~3 min) · 44 end of DHW on the heat pump (~3 min) · 45 end of DHW (~1 min) · 61 DHW on the heat pump · 62 DHW on the gas boiler (Combo) · 64 DHW with the electric heater. Codes were observed on fw 6.0. On fw 4.3, plain DHW was reported as 61.
 
 ## 🔎 Unknown registers — contributions welcome!
 
-Still unidentified: `2102, 4449, 4600` (writable 0/1, all 0), `4201` (= 1, probably a status), `4452` (constant 25.1 / 23.6 — a setting), `4585` (slow-moving temperature) and the always-zero `4011, 4588, 6002, 6014, 6503, 6504`. None of them reacted to any keypad or zone-panel setting tried so far (see the "not exposed" list above).
+Still unidentified:
+- **Writable 0/1:** `2102, 4449, 4600` (all 0).
+- **Constant 1:** `4201` (0 on another unit without a zone panel; candidate "zone panel present on D+/D-").
+- **Setting:** `4452` (251 / 236 / 2 on three units).
+- **Always zero:** `512, 3061, 4011, 4588, 6002, 6014, 6503, 6504` (512, 3061, 6002 and 6504 moved once in June, possibly in cooling).
 
-If you can correlate any of these with operating states, **please open an issue or PR** — that's how we finish the map.
+If you can correlate any of these with operating states, **please open an issue or PR**.
 
-## 🧪 Beta config — PDU scanner
+## 🧪 PDU scanner (optional package)
 
-`immergas-magis-pro-combo-tt-bms-beta.yaml` is the stable config **plus an active PDU scanner**:
+Uncomment `packages/tt_scanner.yaml` in the main file:
 
 1. Turn on **`PDU scanner - scanner mode`** (this pauses normal polling).
-2. Set **`PDU scanner - from` / `to`** (0–65535) and press **`Scan range (from-to)`**, or use a preset button (`Scan PDU 0-999` … `Scan PDU 10000-19999`).
-3. The Atom reads every address with function 0x03 (or 0x04 with the *Input function* switch) and publishes each answer as `OK PDU <N> = <value>` in `PDU scanner - last result` and in the ESPHome log.
+2. Set **`PDU scanner - from` / `to`** (0–65535) and press **`Scan range (from-to)`**, or use a preset button.
+3. Every address is read with 0x03 (or 0x04 with the *Input function* switch). Each answer appears as `OK PDU <N> = <value>` in `PDU scanner - last result` and in the ESPHome log.
 4. Turn scanner mode off to resume normal polling.
 
-Pasting such a dump into an issue — especially from a **multi-zone** install or a different firmware — is the most useful thing you can share. (The earlier "Zone 2/3 candidate" probes were removed: those addresses don't exist on 1- or 2-zone units.)
-
-## Setup
-
-1. `cp secrets.yaml.example secrets.yaml` and fill in your WiFi.
-2. Flash `immergas-magis-pro-combo-tt-bms.yaml` with ESPHome 2026.9+ (or `...-beta.yaml` for the scanner).
-3. Adopt in Home Assistant.
+A dump from a **multi-zone** install or a different firmware is the most useful thing you can share.
 
 ## Notes
 
-- **Boiler fault descriptions (114 codes)** are the official Immergas English texts (extracted from the Dominus app labels).
-- The Modbus register meanings are the author's reverse-engineering; corrections welcome.
-- Renaming an entity in a new version creates a new entity in Home Assistant (the entity ID comes from the name); history stays with the old one.
+- **Fault descriptions:** the 114 boiler fault descriptions are the official Immergas texts (English and Polish, from the Dominus app labels).
+- **Register meanings:** the Modbus register meanings are the author's reverse-engineering; corrections welcome.
+- **Renames create new entities:** renaming an entity creates a new entity in Home Assistant (the entity ID comes from the name), and history stays with the old one. The same happens when you switch the language file.
+- **Translations:** see [TRANSLATING.md](TRANSLATING.md).
 
 ## Disclaimer
 

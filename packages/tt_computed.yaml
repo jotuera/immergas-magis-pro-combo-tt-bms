@@ -1,0 +1,81 @@
+# Immergas Magis Pro / Combo T-/T+ BMS - package "tt_computed"
+# Calculated values: Delta T, estimated thermal power, mean loop temperature, thermal lift, HP return - boiler flow.
+# Part of jotuera/immergas-magis-pro-combo-tt-bms (MIT). Loaded by the main YAML through `packages:`.
+# File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
+
+sensor:
+  - platform: template
+    name: "${n_tt_delta_t}"
+    id: tt_delta_t
+    icon: mdi:thermometer-lines
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(tt_d20_system_flow_temp).state) || isnan(id(tt_d08_system_return_temp).state)) {
+        return NAN;
+      }
+      return id(tt_d20_system_flow_temp).state - id(tt_d08_system_return_temp).state;
+
+  - platform: template
+    name: "${n_tt_thermal_power}"
+    id: tt_thermal_power
+    icon: mdi:fire
+    unit_of_measurement: "kW"
+    device_class: power
+    state_class: measurement
+    accuracy_decimals: 2
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(tt_d14_pump_flow_rate).state) || isnan(id(tt_delta_t).state)) {
+        return NAN;
+      }
+      // P[kW] = flow [l/h] * deltaT [°C] * 1.163 / 1000
+      return (id(tt_d14_pump_flow_rate).state * id(tt_delta_t).state * 1.163) / 1000.0;
+
+  - platform: template
+    name: "${n_tt_mean_loop_temp}"
+    id: tt_mean_loop_temp
+    icon: mdi:thermometer
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(tt_d20_system_flow_temp).state) || isnan(id(tt_d08_system_return_temp).state)) {
+        return NAN;
+      }
+      return (id(tt_d20_system_flow_temp).state + id(tt_d08_system_return_temp).state) / 2.0;
+
+  - platform: template
+    name: "${n_tt_thermal_lift}"
+    id: tt_thermal_lift
+    icon: mdi:arrow-expand-vertical
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(tt_d20_system_flow_temp).state) || isnan(id(tt_d06_oat).state)) {
+        return NAN;
+      }
+      return id(tt_d20_system_flow_temp).state - id(tt_d06_oat).state;
+
+  - platform: template
+    name: "${n_tt_separator_delta}"
+    id: tt_separator_delta
+    icon: mdi:call-split
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    update_interval: 30s
+    lambda: |-
+      if (isnan(id(tt_d08_system_return_temp).state) || isnan(id(tt_secondary_gen_flow_temp).state)) {
+        return NAN;
+      }
+      return id(tt_d08_system_return_temp).state - id(tt_secondary_gen_flow_temp).state;

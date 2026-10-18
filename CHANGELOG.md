@@ -1,0 +1,33 @@
+# Changelog
+
+## v2.0.0
+
+- **Modular config:**
+  - The main YAML now only holds the device settings and a `packages:` list. The code lives in `packages/tt_*.yaml` and is fetched from GitHub.
+  - The PDU scanner is the optional package `tt_scanner.yaml`, which replaces `immergas-magis-pro-combo-tt-bms-beta.yaml`.
+  - File names and ids start with `tt_`, so the D+/D- and F1/F2 repos can be combined with this one on one device.
+- **Languages:** `packages/lang/tt_en.yaml` and `packages/lang/tt_pl.yaml` (entity names, state texts, 114 fault descriptions).
+- **New:** estimated gas consumption (`tt_gas.yaml`): m³ counter for the Energy dashboard, calibrated CH/DHW rates, "Gas boiler running".
+- **Decoded:**
+  - 4554 = D73 compressor discharge temperature
+  - 4585 = D72 compressor temperature
+  - 4586 = compressor power step (0-6)
+  - 3027 = candidate "heat pump excluded"
+- **Status codes:**
+  - D97 336
+  - D98 236, D98 215 = boiler heating (cycle)
+  - D99 7, D99 44
+  - D99 61 = DHW on the heat pump (was "solar boost")
+- **Changed:** "Heating active" / "Cooling active" no longer use the `heat` / `cold` device classes (shown as on/off).
+- **Renamed (new entities in HA):**
+  - `Refrigerant hot-side temperature (cand.)` → `D73 Compressor discharge temperature`
+  - `Refrigerant circuit 4585 (cand. temp D72-74)` → `D72 Compressor temperature`
+  - `Compressor running` → `Compressor power step`
+
+## v1.1.0
+
+- Integration / installer settings as controls (I01–I09, T02, T04, P15, A12), D61 system model, D91 firmware, ESPHome 2026.9 cleanup.
+
+## v1.0.0
+
+- First release.

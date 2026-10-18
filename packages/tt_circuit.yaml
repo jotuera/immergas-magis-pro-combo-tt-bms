@@ -1,0 +1,107 @@
+# Immergas Magis Pro / Combo T-/T+ BMS - package "tt_circuit"
+# Hydraulic circuit: D20/D08 flow/return, boiler flow (3029), D14 flow rate, D06 outdoor, D04 calculated setpoint, D22 3-way valve.
+# Part of jotuera/immergas-magis-pro-combo-tt-bms (MIT). Loaded by the main YAML through `packages:`.
+# File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
+
+sensor:
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_d20_system_flow_temp}"
+    id: tt_d20_system_flow_temp
+    register_type: holding
+    address: 3000
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_d08_system_return_temp}"
+    id: tt_d08_system_return_temp
+    register_type: holding
+    address: 3001
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_secondary_gen_flow_temp}"
+    id: tt_secondary_gen_flow_temp
+    register_type: holding
+    address: 3029
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_d14_pump_flow_rate}"
+    id: tt_d14_pump_flow_rate
+    register_type: holding
+    address: 3054
+    value_type: U_WORD
+    unit_of_measurement: "l/h"
+    state_class: measurement
+    accuracy_decimals: 0
+
+  # D06 OAT - correct address from table: 3002
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_d06_oat}"
+    id: tt_d06_oat
+    register_type: holding
+    address: 3002
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
+
+  # D04 (reg. 3003) - flow setpoint calculated from the heating curve, x0.1 °C; 0 = no heat demand.
+  # (Earlier versions mislabelled this as R08 zone 2.)
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_d04_calc_flow_setpoint}"
+    id: tt_d04_calc_flow_setpoint
+    register_type: holding
+    address: 3003
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_pdu_3028}"
+    id: tt_pdu_3028
+    icon: mdi:valve
+    register_type: holding
+    address: 3028
+    value_type: U_WORD
+    accuracy_decimals: 0

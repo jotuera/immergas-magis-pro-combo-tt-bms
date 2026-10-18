@@ -1,0 +1,69 @@
+# Immergas Magis Pro / Combo T-/T+ BMS - package "tt_core"
+# Base: project info, RS485 UART, Modbus, the two polling controllers and the "BMS connection" switch.
+# Part of jotuera/immergas-magis-pro-combo-tt-bms (MIT). Loaded by the main YAML through `packages:`.
+# File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
+
+substitutions:
+  tt_project_version: "2.0.0"
+  # RS485 pins (M5Stack Atom + RS485 unit). Override in your main YAML if your wiring differs.
+  tt_uart_tx_pin: GPIO26
+  tt_uart_rx_pin: GPIO32
+  tt_uart_de_pin: GPIO25
+  tt_modbus_address: "11"        # Immergas BMS slave address
+  tt_fast_interval: 30s          # control + key sensors
+  tt_diag_interval: 300s         # rarely changing diagnostic registers
+
+esphome:
+  project:
+    name: "jotuera.immergas-magis-pro-combo-tt-bms"
+    version: "${tt_project_version}"
+
+# Atom Lite + MAX3485 / RS485 TTL 3.3 V. Immergas T+ / T- -> RS485 A/B. If no response or CRC errors, swap T+ and T-.
+uart:
+  - id: tt_uart
+    tx_pin: ${tt_uart_tx_pin}
+    rx_pin: ${tt_uart_rx_pin}
+    baud_rate: 9600
+    data_bits: 8
+    parity: NONE
+    stop_bits: 2   # 8N2 per Immergas manual (also reads fine on 8N1 receivers)
+
+modbus:
+  - id: tt_modbus
+    uart_id: tt_uart
+    flow_control_pin: ${tt_uart_de_pin}
+    send_wait_time: 150ms
+    # ESPHome 2026.9+: frame spacing is set here. Default is 600 ms, which makes writes from HA slow.
+    turnaround_time: 80ms
+
+modbus_controller:
+  # Fast controller: control + key sensors (short queue = fast writes).
+  - id: tt_bms
+    address: ${tt_modbus_address}
+    modbus_id: tt_modbus
+    update_interval: ${tt_fast_interval}
+
+  # Slow controller: diagnostic registers that rarely change.
+  - id: tt_bms_diag
+    address: ${tt_modbus_address}
+    modbus_id: tt_modbus
+    update_interval: ${tt_diag_interval}
+
+switch:
+  - platform: template
+    name: "${n_tt_bms_connection_switch}"
+    id: tt_bms_connection_switch
+    icon: mdi:lan-connect
+    entity_category: config
+    restore_mode: RESTORE_DEFAULT_ON
+    optimistic: true
+    turn_on_action:
+      - lambda: |-
+          id(tt_bms).start_poller();
+          id(tt_bms_diag).start_poller();
+          ESP_LOGI("tt_bms", "BMS connection ON - polling resumed");
+    turn_off_action:
+      - lambda: |-
+          id(tt_bms).stop_poller();
+          id(tt_bms_diag).stop_poller();
+          ESP_LOGW("tt_bms", "BMS connection OFF - polling paused");

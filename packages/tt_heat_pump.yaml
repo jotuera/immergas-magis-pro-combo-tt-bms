@@ -1,0 +1,111 @@
+# Immergas Magis Pro / Combo T-/T+ BMS - package "tt_heat_pump"
+# Heat pump / refrigerant circuit: D24, D71 frequency, D72/D73/D74 temperatures, D76 fan, D77 EEV, compressor power step.
+# Part of jotuera/immergas-magis-pro-combo-tt-bms (MIT). Loaded by the main YAML through `packages:`.
+# File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
+
+sensor:
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_d24_refrigerant_liquid_phase_temp}"
+    id: tt_d24_refrigerant_liquid_phase_temp
+    register_type: holding
+    address: 3056
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    state_class: measurement
+    accuracy_decimals: 1
+    filters:
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_pdu_4551}"
+    id: tt_pdu_4551
+    register_type: holding
+    address: 4551
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    accuracy_decimals: 1
+    filters:
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
+
+  # D73 - equal to the NASA 0x820A discharge temperature to 0.1 °C (DHW heat-pump test, 14/15.10.2026).
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_pdu_4554}"
+    id: tt_pdu_4554
+    register_type: holding
+    address: 4554
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    accuracy_decimals: 1
+    filters:
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
+
+  # EEV position
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_eev_position}"
+    id: tt_eev_position
+    register_type: holding
+    address: 4557
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_pdu_4558}"
+    id: tt_pdu_4558
+    icon: mdi:sine-wave
+    register_type: holding
+    address: 4558
+    value_type: U_WORD
+    unit_of_measurement: "Hz"
+    accuracy_decimals: 0
+
+  # D72 - equal to the NASA 0x8280 compressor top temperature to 0.1 °C (DHW heat-pump test).
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_pdu_4585}"
+    id: tt_pdu_4585
+    register_type: holding
+    address: 4585
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    device_class: temperature
+    accuracy_decimals: 1
+    filters:
+      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
+      - lambda: |-
+          return x == -32768 ? NAN : x * 0.1f;
+
+  # Not a 0/1 flag: compressor power step 0-6, rising with frequency (25 Hz=1, 30=2, 43=3, 51=4, 58=5, 61=6).
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_pdu_4586}"
+    id: tt_pdu_4586
+    icon: mdi:heat-pump
+    register_type: holding
+    address: 4586
+    value_type: U_WORD
+    accuracy_decimals: 0
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_pdu_4587}"
+    id: tt_pdu_4587
+    icon: mdi:fan
+    register_type: holding
+    address: 4587
+    value_type: U_WORD
+    unit_of_measurement: "rpm"
+    accuracy_decimals: 0

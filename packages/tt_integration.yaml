@@ -1,0 +1,97 @@
+# Immergas Magis Pro / Combo T-/T+ BMS - package "tt_integration"
+# Gas boiler / heat pump integration (menu I): I01, I02, I03, I04, I05, I07, I09.
+# Part of jotuera/immergas-magis-pro-combo-tt-bms (MIT). Loaded by the main YAML through `packages:`.
+# File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
+
+switch:
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_sw_4454}"
+    id: tt_sw_4454
+    icon: mdi:water-boiler
+    register_type: holding
+    address: 4454
+    bitmask: 1
+    entity_category: config
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_sw_4453}"
+    id: tt_sw_4453
+    icon: mdi:radiator
+    register_type: holding
+    address: 4453
+    bitmask: 1
+    entity_category: config
+
+select:
+  # I05 (reg. 4451) - integration activation mode: 0 = AU (automatic), 1 = MA (manual).
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_i05_integration_mode}"
+    id: tt_i05_integration_mode
+    icon: mdi:swap-horizontal-circle
+    entity_category: config
+    address: 4451
+    value_type: U_WORD
+    optionsmap:
+      "${t_tt_i05_auto}": 0
+      "${t_tt_i05_manual}": 1
+
+number:
+  # Integration (I), T and P settings - confirmed by changing them on the unit; writing from HA works.
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_i03_max_wait_dhw}"
+    id: tt_i03_max_wait_dhw
+    icon: mdi:timer-sand
+    register_type: holding
+    address: 4469
+    value_type: U_WORD
+    unit_of_measurement: "min"
+    min_value: 1
+    max_value: 255
+    step: 1
+    mode: slider
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_i04_max_wait_ch}"
+    id: tt_i04_max_wait_ch
+    icon: mdi:timer-sand
+    register_type: holding
+    address: 4468
+    value_type: U_WORD
+    unit_of_measurement: "min"
+    min_value: 1
+    max_value: 255
+    step: 1
+    mode: slider
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_i07_activation_band}"
+    id: tt_i07_activation_band
+    icon: mdi:thermometer-lines
+    register_type: holding
+    address: 4479
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    min_value: 0
+    max_value: 10
+    step: 1
+    mode: slider
+
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_i09_dhw_activation_temp}"
+    id: tt_i09_dhw_activation_temp
+    icon: mdi:thermometer-chevron-down
+    register_type: holding
+    address: 4455
+    value_type: S_WORD
+    unit_of_measurement: "°C"
+    min_value: -25
+    max_value: 35
+    step: 1
+    mode: slider
