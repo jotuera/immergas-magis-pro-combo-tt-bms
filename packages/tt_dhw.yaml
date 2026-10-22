@@ -1,9 +1,36 @@
 # Immergas Magis Pro / Combo T-/T+ BMS - package "tt_dhw"
-# Domestic hot water: D03 tank temperature, DHW setpoint (2095) as a water_heater entity, T02 DHW thermostat.
+# Domestic hot water: D03 tank temperature, DHW setpoint (2095) as a water_heater entity, T02 DHW thermostat,
+# DHW boost via the BMS DHW temperature register 4011.
 # Part of jotuera/immergas-magis-pro-combo-tt-bms (MIT). Loaded by the main YAML through `packages:`.
 # File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
 
+# Register 4011 = DHW tank temperature supplied by the BMS, x0.1 °C; 0 = the unit uses its own tank probe.
+# While 4011 > 0 the unit ignores the probe: D03 shows the 4011 value and the unit heats DHW as if the tank
+# were cold (a "DHW boost"). It stops only when 4011 goes back to 0, so the boost below is time-limited and
+# 4011 is cleared at every boot (never leave an override behind after a reboot or a power cut).
+esphome:
+  on_boot:
+    priority: -100
+    then:
+      - number.set:
+          id: tt_dhw_bms_temp_set
+          value: 0
+
 sensor:
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_dhw_bms_temp}"
+    id: tt_dhw_bms_temp
+    icon: mdi:thermometer-alert
+    entity_category: diagnostic
+    register_type: holding
+    address: 4011
+    value_type: U_WORD
+    unit_of_measurement: "°C"
+    accuracy_decimals: 1
+    filters:
+      - multiply: 0.1
+
   - platform: modbus_controller
     modbus_controller_id: tt_bms
     name: "${n_tt_d03_dhw_temperatura_zasobnika}"
@@ -21,6 +48,33 @@ sensor:
           return x == -32768 ? NAN : x * 0.1f;
 
 number:
+  # Raw write to 4011 (used by the DHW boost). Not exposed: a wrong value keeps the unit heating DHW.
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_dhw_bms_temp_set}"
+    id: tt_dhw_bms_temp_set
+    internal: true
+    register_type: holding
+    address: 4011
+    value_type: U_WORD
+    min_value: 0
+    max_value: 800
+    step: 1
+
+  - platform: template
+    name: "${n_tt_dhw_boost_minutes}"
+    id: tt_dhw_boost_minutes
+    icon: mdi:timer-outline
+    entity_category: config
+    unit_of_measurement: "min"
+    min_value: 5
+    max_value: 60
+    step: 5
+    initial_value: 20
+    restore_value: true
+    optimistic: true
+    mode: box
+
   # DHW: set °C in HA; register 2095 receives x10 (e.g. 43°C -> 430).
   # 43°C -> 430, 50°C -> 500.
   - platform: modbus_controller
@@ -52,6 +106,40 @@ number:
     max_value: 20
     step: 1
     mode: slider
+
+switch:
+  # DHW boost: writes 4011 = 1 (0.1 °C, "tank cold") so the unit heats DHW now, then 0 after the set time.
+  # During the boost D03 / the DHW entity show 0.1 °C instead of the real tank temperature.
+  - platform: template
+    name: "${n_tt_dhw_boost}"
+    id: tt_dhw_boost
+    icon: mdi:water-boiler-alert
+    optimistic: true
+    restore_mode: ALWAYS_OFF
+    turn_on_action:
+      - script.execute: tt_dhw_boost_run
+    turn_off_action:
+      - script.stop: tt_dhw_boost_run
+      - number.set:
+          id: tt_dhw_bms_temp_set
+          value: 0
+      - logger.log:
+          tag: tt_dhw
+          format: "DHW boost OFF - 4011 = 0"
+
+script:
+  - id: tt_dhw_boost_run
+    mode: restart
+    then:
+      - number.set:
+          id: tt_dhw_bms_temp_set
+          value: 1
+      - logger.log:
+          tag: tt_dhw
+          format: "DHW boost ON for %.0f min - 4011 = 1"
+          args: ["id(tt_dhw_boost_minutes).state"]
+      - delay: !lambda "return (uint32_t) (id(tt_dhw_boost_minutes).state * 60000.0f);"
+      - switch.turn_off: tt_dhw_boost
 
 water_heater:
   - platform: template

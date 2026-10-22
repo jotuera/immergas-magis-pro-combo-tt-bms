@@ -4,7 +4,7 @@
 # File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
 
 substitutions:
-  tt_project_version: "2.0.0"
+  tt_project_version: "2.1.0"
   # RS485 pins (M5Stack Atom + RS485 unit). Override in your main YAML if your wiring differs.
   tt_uart_tx_pin: GPIO26
   tt_uart_rx_pin: GPIO32

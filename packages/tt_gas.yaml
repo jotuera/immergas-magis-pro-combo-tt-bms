@@ -117,16 +117,19 @@ interval:
           }
           int d99 = (int) id(tt_system_state_raw).state;
           int d98 = (int) id(tt_status_boilera_raw).state;
+          int d22 = isnan(id(tt_pdu_3028).state) ? 0 : (int) id(tt_pdu_3028).state;
           // Checked on recordings (boiler flow 3029 minus HP return D08):
           //   D99 62            = DHW by gas                (~38 K)
           //   D98 215 / D99 8   = CH by boiler, cycle         (~47 K)
           //   D98 236 / D99 7   = CH by boiler only (I10)     (6-22 K)
           //   D98 252 / D99 6   = normal HEAT PUMP heating    (~1-2 K) -> not gas
           //   D99 41/44/45/46   = overrun after CH/DHW, burner off -> not gas
+          //   D22 = 1 (generator 3-way valve on DHW) with D98 215 / D99 8 = DHW by gas too (start of a DHW
+          //   cycle and the DHW boost via 4011 report 8/215, not 62) -> DHW rate.
           // The code for gas joining a running heat pump (integration after I04) is not known yet,
           // so in CH a physical signal also counts: boiler flow >= D08 + 8 K.
           int mode = 0;
-          if (d99 == 62) {
+          if (d99 == 62 || (d22 == 1 && (d98 == 215 || d99 == 8))) {
             mode = 2;
           } else if (d98 == 215 || d98 == 236 || d99 == 7) {
             mode = 1;

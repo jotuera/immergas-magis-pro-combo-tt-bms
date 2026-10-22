@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.1.0
+
+- **DHW boost:** switch `DHW boost` + `DHW boost duration` (5–60 min). Register 4011 = DHW tank temperature supplied by the BMS (×0.1 °C, 0 = own probe). The boost writes 4011 = 1, then 0. 4011 is cleared at every boot.
+- **4011 read-out:** `PDU 4011` (diagnostics, 300 s) is replaced by `DHW temperature from BMS (4011)` (30 s). This is a new entity in HA.
+- **Gas estimate:** DHW rate also when D22 = 1 with D98 215 / D99 8.
+
 ## v2.0.0
 
 - **Modular config:**
