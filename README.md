@@ -17,6 +17,15 @@ Sister projects (same author, designed to run together on one device later):
 - [immergas-magis-pro-combo-dd-modbus](https://github.com/jotuera/immergas-magis-pro-combo-dd-modbus) — Dominus / zone-panel emulator on the D+/D- bus
 - [immergas-magis-pro-combo-f1f2-nasa](https://github.com/jotuera/immergas-magis-pro-combo-f1f2-nasa) — Samsung NASA reader on the F1/F2 bus
 
+> [!IMPORTANT]
+> **A zone 1 panel on D+/D- is required for heating.** While this config polls the T-/T+ bus, the unit takes the BMS as its controller. Without a zone panel on D+/D-, the **heat pump stops and does not start again**, even if your room thermostat (40-1/41) calls for heat. It runs again as soon as polling stops (`BMS connection` off).
+>
+> Connect one of these on **D+/D-**:
+> - a physical **Immergas zone 1 remote panel** (code **3.030863**), or
+> - the **zone 1 panel emulator** from [immergas-magis-pro-combo-dd-modbus](https://github.com/jotuera/immergas-magis-pro-combo-dd-modbus) (second ESP on D+/D-).
+>
+> This happens even with only a few read-only sensors enabled: the polling itself triggers it, not any write. Register 2010 does not replace the panel on firmware ≤ 6.0. See [#1](https://github.com/jotuera/immergas-magis-pro-combo-tt-bms/issues/1) and [#3](https://github.com/jotuera/immergas-magis-pro-combo-tt-bms/issues/3).
+
 ## Hardware
 
 - **M5Stack Atom Lite** (ESP32) + **RS485** transceiver (e.g. MAX3485 / M5 RS485 unit)
@@ -97,7 +106,10 @@ The unit does not report gas use, so `tt_gas.yaml` counts the time the gas boile
 ## ⚠️ Important caveats
 
 - **Operating mode: whoever keeps asserting it wins.** An *emulated* zone panel on D+/D- re-asserts its mode continuously and reverts any mode written via T-/T+ (register 2000). With a *real* Dominus panel (firmware 6.0), the unit holds a mode written over T-/T+ as the BMS command. It then reverts mode changes made on the keypad or on the Dominus. With a T-/T+ master running, change the mode from Home Assistant.
-- **Thermostat input 40-1/41 needs a zone 1 panel on D+/D-.** On firmware 6.0, with the BMS master polling, a thermostat contact on 40-1/41 starts heating **only** when a zone 1 panel is present on D+/D-: the real Dominus panel (A31 = RPT) or the [dd-modbus emulator](https://github.com/jotuera/immergas-magis-pro-combo-dd-modbus). Without it the contact is ignored, and register 2010 doesn't help (two users on fw 4.3 and 6.0). Reports of 2010 working come from firmware 8.3+. See [issue #1](https://github.com/jotuera/immergas-magis-pro-combo-tt-bms/issues/1).
+- **Heating needs a zone 1 panel on D+/D- (see the note at the top).** With the BMS master polling, the heat pump runs **only** when a zone 1 panel is present on D+/D-: the real Immergas zone panel (3.030863; A31 = RPT or RP) or the [dd-modbus emulator](https://github.com/jotuera/immergas-magis-pro-combo-dd-modbus).
+  - **Without a panel:** the unit stops heating as soon as polling starts and ignores the 40-1/41 thermostat contact. Register 2010 doesn't help. Users with fw 4.3 and 6.0 have confirmed this (#3: firmware not reported).
+  - **Firmware 8.3+:** reports that 2010 works come only from these units.
+  - See [#1](https://github.com/jotuera/immergas-magis-pro-combo-tt-bms/issues/1) and [#3](https://github.com/jotuera/immergas-magis-pro-combo-tt-bms/issues/3).
 - **Probes not fitted read `-32768` (0x8000),** e.g. register 3029 (boiler flow) on a heat-pump-only Magis Pro. All temperature sensors map this to *unknown*.
 
 ## Bus facts
