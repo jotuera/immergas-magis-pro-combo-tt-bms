@@ -203,6 +203,10 @@ Uncomment `packages/tt_scanner.yaml` in the main file:
 
 A dump from a **multi-zone** install or a different firmware is the most useful thing you can share.
 
+## Running on one device with the other buses
+
+The `tt_` packages can share one ESP32 with [dd-modbus](https://github.com/jotuera/immergas-magis-pro-combo-dd-modbus) and [f1f2-nasa](https://github.com/jotuera/immergas-magis-pro-combo-f1f2-nasa): put the package lists next to each other under one `packages:` and keep one device section (esp32, wifi, api, logger). Each bus needs its own UART and pins (`tt_uart_tx_pin` / `tt_uart_rx_pin` / `tt_uart_de_pin`); an ESP32 has three hardware UARTs, so move the logger off them (`logger: baud_rate: 0`, or `hardware_uart: USB_SERIAL_JTAG` on an ESP32-S3). To tell the buses apart in Home Assistant, set a name prefix per bus, e.g. `tt_name_prefix: "Immergas TT"` → *Immergas TT - D20 System flow temperature*.
+
 ## Notes
 
 - **Fault descriptions:** the 114 boiler fault descriptions are the official Immergas texts (English and Polish, from the Dominus app labels).

@@ -182,6 +182,10 @@ Odkomentuj `packages/tt_scanner.yaml` w pliku głównym:
 
 Zrzut z instalacji **wielostrefowej** albo z innym firmware to najbardziej przydatna rzecz, jaką możesz udostępnić.
 
+## Jedno urządzenie na kilka magistral
+
+Pakiety `tt_` mogą działać na jednym ESP32 razem z [dd-modbus](https://github.com/jotuera/immergas-magis-pro-combo-dd-modbus) i [f1f2-nasa](https://github.com/jotuera/immergas-magis-pro-combo-f1f2-nasa): listy pakietów stoją obok siebie pod jednym `packages:`, a sekcja urządzenia (esp32, wifi, api, logger) jest jedna. Każda magistrala ma własny UART i piny (`tt_uart_tx_pin` / `tt_uart_rx_pin` / `tt_uart_de_pin`); ESP32 ma trzy sprzętowe UART-y, więc logger trzeba z nich zdjąć (`logger: baud_rate: 0` albo `hardware_uart: USB_SERIAL_JTAG` na ESP32-S3). Żeby odróżnić magistrale w Home Assistant, ustaw prefiks nazw, np. `tt_name_prefix: "Immergas TT"` → *Immergas TT - D20 Temperatura zasilania instalacji*
+
 ## Uwagi
 
 - **Opisy błędów:** 114 opisów błędów kotła to oficjalne teksty Immergas (angielski i polski, z etykiet aplikacji Dominus).

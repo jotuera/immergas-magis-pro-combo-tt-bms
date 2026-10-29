@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.2.0
+
+- New substitution **`tt_name_prefix`** (default `"Immergas"`): the first part of every entity name
+  (`"<prefix> - <name>"`). With the default the names are exactly as in v2.1.0. Set it in the main YAML when the
+  T-/T+ packages share one device with dd-modbus / f1f2-nasa, e.g. `tt_name_prefix: "Immergas TT"`.
+
 ## v2.1.0
 
 - **DHW boost:** switch `DHW boost` + `DHW boost duration` (5–60 min). Register 4011 = DHW tank temperature supplied by the BMS (×0.1 °C, 0 = own probe). The boost writes 4011 = 1, then 0. 4011 is cleared at every boot.

@@ -4,7 +4,7 @@
 # slave 11, 9600 8N2): operating mode, flow/return/DHW temperatures, heat pump data, boiler faults,
 # integration and installer settings, estimated gas use. No cloud. See README.md for wiring and the register map.
 #
-# Project : jotuera.immergas-magis-pro-combo-tt-bms  |  v2.1.0
+# Project : jotuera.immergas-magis-pro-combo-tt-bms  |  v2.2.0
 # Repo    : https://github.com/jotuera/immergas-magis-pro-combo-tt-bms
 # License : MIT (c) 2026 JoTu
 # Tested  : Magis Combo 9 Plus V2 (fw 6.0), Magis Pro V2 (community).
@@ -72,7 +72,7 @@ button:
 packages:
   tt_bms:
     url: https://github.com/jotuera/immergas-magis-pro-combo-tt-bms
-    ref: v2.1.0
+    ref: v2.2.0
     refresh: 1d
     files:
       - packages/tt_core.yaml          # UART, Modbus, polling, "BMS connection" switch   (required)
