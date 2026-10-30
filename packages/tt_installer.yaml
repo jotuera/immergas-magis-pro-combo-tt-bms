@@ -27,7 +27,8 @@ switch:
 
 number:
   # T07 (reg. 6002) - room thermostat (TA) request delay, 0-240 s in 10 s steps (default 0).
-  # The register holds the panel value (1 = 10 s); `multiply` converts it to seconds and back when writing.
+  # The register holds the panel value (1 = 10 s). In a modbus_controller number `multiply` scales the value
+  # written to the unit and divides the value read back, so 0.1 gives seconds in HA (20 s -> 2 on the panel).
   - platform: modbus_controller
     modbus_controller_id: tt_bms
     name: "${n_tt_t07_ta_delay}"
@@ -36,7 +37,7 @@ number:
     register_type: holding
     address: 6002
     value_type: U_WORD
-    multiply: 10
+    multiply: 0.1
     unit_of_measurement: "s"
     min_value: 0
     max_value: 240
