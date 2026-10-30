@@ -71,7 +71,7 @@ packages/
   tt_dhw.yaml           D03 tank temperature, DHW water_heater (2095), T02, DHW boost (4011)
   tt_heating.yaml       outdoor probe R01, zone 1 limits R04/R05/R12/R13, zone 1 thermostat enable (2010)
   tt_integration.yaml   menu I: I01, I02, I03, I04, I05, I07, I09
-  tt_installer.yaml     P15, A12, A03/A04 pump speed, T04, T05
+  tt_installer.yaml     P15, A12, A03/A04 pump speed, T04, T05, T07
   tt_computed.yaml      Delta T, thermal power, mean loop temperature, thermal lift, HP return - boiler flow
   tt_gas.yaml           estimated gas consumption (needs tt_status + tt_circuit)
   tt_diagnostics.yaml   undecoded registers + undocumented writable 0/1 registers
@@ -92,7 +92,7 @@ To drop a feature, delete its line from `packages:` in the main file. `tt_core`,
 ## What it does
 
 - **Reads:** flow/return/DHW/outdoor temperatures, **calculated flow setpoint (D04)**, compressor frequency and power step, compressor/discharge/evaporator temperatures, EEV position, outdoor fan speed, 3-way valve position, heat-pump/boiler/system status, fault code + description, system model (D61), firmware version (D91).
-- **Controls:** operating mode (2000), DHW setpoint (2095), **DHW boost (4011)**, weather-curve outdoor probe (R01), zone-1 heating/cooling limits (R04/R05/R12/R13), circulation pump min/max speed (A03/A04), zone-1 thermostat, **gas/heat-pump integration (I01–I09)**, T02, T04, T05, P15 anti-legionella, A12 system vent.
+- **Controls:** operating mode (2000), DHW setpoint (2095), **DHW boost (4011)**, weather-curve outdoor probe (R01), zone-1 heating/cooling limits (R04/R05/R12/R13), circulation pump min/max speed (A03/A04), zone-1 thermostat, **gas/heat-pump integration (I01–I09)**, T02, T04, T05, T07, P15 anti-legionella, A12 system vent.
 - **Calculated:** Delta T, mean loop temperature, thermal lift, heat-pump return − boiler flow difference, **estimated gas consumption**.
 - BMS connection toggle (start/stop polling).
 
@@ -167,6 +167,7 @@ The unit does not report gas use, so `tt_gas.yaml` counts the time the gas boile
 | 4586 | — | **Compressor power step** 0–6 (25 Hz = 1, 30 = 2, 43 = 3, 51 = 4, 58 = 5, 61 = 6) | step |
 | 4587 | D76 | Outdoor unit fan speed (candidate) | rpm |
 | 6000 | T05 | Central heating ignitions timer | RW |
+| 6002 | T07 | Room thermostat (TA) request delay: 0-24 = 0-240 s in 10 s steps (panel value) | ×10 s, RW |
 | 6010 | A03 | Circulation pump minimum speed | %, RW |
 | 6011 | A04 | Circulation pump maximum speed | %, RW |
 | 6013 | A12 | System vent (automatic venting at power-up) | 0/1, RW |
@@ -188,7 +189,7 @@ All RW settings in the 44xx / 60xx rows were verified both ways: changing them o
 Still unidentified:
 - **Writable 0/1:** `2102, 4449, 4600` (all 0).
 - **Setting:** `4452` (251 / 236 / 2 on three units).
-- **Always zero:** `512, 3061, 4588, 6002, 6014, 6503, 6504` (512, 3061, 6002 and 6504 moved once in June, possibly in cooling).
+- **Always zero:** `512, 3061, 4588, 6014, 6503, 6504` (512, 3061 and 6504 moved once in June, possibly in cooling).
 
 If you can correlate any of these with operating states, **please open an issue or PR**.
 

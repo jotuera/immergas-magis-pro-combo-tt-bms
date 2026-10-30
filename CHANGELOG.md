@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.4.0
+
+- **Decoded 6002 = T07** (room thermostat request delay, 0-240 s in 10 s steps; the register holds the panel value,
+  1 = 10 s). Found by changing T07 on the panel (0 -> 1 -> 0) on a Magis Combo 9 Plus V2 (fw 6.0).
+- **New control:** slider `T07 Room thermostat request delay` (0-240 s, step 10 s) in `tt_installer.yaml`.
+  It replaces the diagnostic `PDU 6002`, which you can delete in HA.
+
 ## v2.3.0
 
 - **Decoded 4201 = R01** (outdoor temperature probe for the weather curve): 0 = OFF, 1 = OU, 2 = IU. Found by @Bettapro in #4 and

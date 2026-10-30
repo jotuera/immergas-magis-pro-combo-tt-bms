@@ -1,5 +1,5 @@
 # Immergas Magis Pro / Combo T-/T+ BMS - package "tt_installer"
-# Installer parameters: P15 anti-legionella, A12 venting, A03/A04 pump speed, T04, T05.
+# Installer parameters: P15 anti-legionella, A12 venting, A03/A04 pump speed, T04, T05, T07.
 # Part of jotuera/immergas-magis-pro-combo-tt-bms (MIT). Loaded by the main YAML through `packages:`.
 # File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
 
@@ -26,6 +26,24 @@ switch:
     entity_category: config
 
 number:
+  # T07 (reg. 6002) - room thermostat (TA) request delay, 0-240 s in 10 s steps (default 0).
+  # The register holds the panel value (1 = 10 s); `multiply` converts it to seconds and back when writing.
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_t07_ta_delay}"
+    id: tt_t07_ta_delay
+    icon: mdi:timer-outline
+    register_type: holding
+    address: 6002
+    value_type: U_WORD
+    multiply: 10
+    unit_of_measurement: "s"
+    min_value: 0
+    max_value: 240
+    step: 10
+    mode: slider
+    entity_category: config
+
   - platform: modbus_controller
     modbus_controller_id: tt_bms
     name: "${n_tt_t04_unknown}"

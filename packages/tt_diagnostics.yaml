@@ -61,16 +61,6 @@ sensor:
     entity_category: diagnostic
     accuracy_decimals: 0
 
-  - platform: modbus_controller
-    modbus_controller_id: tt_bms_diag
-    name: "${n_tt_pdu_6002}"
-    id: tt_pdu_6002
-    register_type: holding
-    address: 6002
-    value_type: U_WORD
-    entity_category: diagnostic
-    accuracy_decimals: 0
-
   # A03/A04 (pump min/max %) removed from diagnostics — available as number sliders.
 
   - platform: modbus_controller

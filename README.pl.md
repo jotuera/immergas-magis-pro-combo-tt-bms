@@ -54,7 +54,7 @@ packages/
   tt_dhw.yaml           D03 temperatura zasobnika, water_heater CWU (2095), T02
   tt_heating.yaml       sonda zewnętrzna R01, limity strefy 1 R04/R05/R12/R13, włączenie termostatu strefy 1 (2010)
   tt_integration.yaml   menu I: I01, I02, I03, I04, I05, I07, I09
-  tt_installer.yaml     P15, A12, prędkość pompy A03/A04, T04, T05
+  tt_installer.yaml     P15, A12, prędkość pompy A03/A04, T04, T05, T07
   tt_computed.yaml      Delta T, moc cieplna, średnia temperatura obiegu, thermal lift, powrót PC - zasilanie kotła
   tt_gas.yaml           szacowane zużycie gazu (wymaga tt_status + tt_circuit)
   tt_diagnostics.yaml   nierozszyfrowane rejestry + nieudokumentowane zapisywalne rejestry 0/1
@@ -75,7 +75,7 @@ packages/
 ## Co robi
 
 - **Odczytuje:** temperatury zasilania/powrotu/CWU/zewnętrzną, **wyliczoną nastawę zasilania (D04)**, częstotliwość i stopień mocy sprężarki, temperatury sprężarki/tłoczenia/parownika, pozycję EEV, obroty wentylatora zewnętrznego, pozycję zaworu 3-drogowego, status pompy ciepła/kotła/systemu, kod błędu + opis, model systemu (D61), wersję firmware (D91).
-- **Steruje:** trybem pracy (2000), nastawą CWU (2095), sondą zewnętrzną krzywej grzewczej (R01), limitami grzania/chłodzenia strefy 1 (R04/R05/R12/R13), minimalną/maksymalną prędkością pompy obiegowej (A03/A04), termostatem strefy 1, **integracją gaz/pompa ciepła (I01–I09)**, T02, T04, T05, anty-legionellą P15, odpowietrzaniem systemu A12.
+- **Steruje:** trybem pracy (2000), nastawą CWU (2095), sondą zewnętrzną krzywej grzewczej (R01), limitami grzania/chłodzenia strefy 1 (R04/R05/R12/R13), minimalną/maksymalną prędkością pompy obiegowej (A03/A04), termostatem strefy 1, **integracją gaz/pompa ciepła (I01–I09)**, T02, T04, T05, T07, anty-legionellą P15, odpowietrzaniem systemu A12.
 - **Wylicza:** Delta T, średnią temperaturę obiegu, thermal lift, różnicę powrót pompy ciepła − zasilanie kotła, **szacowane zużycie gazu**.
 - Przełącznik połączenia BMS (start/stop odpytywania).
 
@@ -146,6 +146,7 @@ Urządzenie nie raportuje zużycia gazu, więc `tt_gas.yaml` liczy czas pracy ko
 | 4586 | — | **Stopień mocy sprężarki** 0–6 (25 Hz = 1, 30 = 2, 43 = 3, 51 = 4, 58 = 5, 61 = 6) | stopień |
 | 4587 | D76 | Obroty wentylatora jednostki zewnętrznej (kandydat) | obr/min |
 | 6000 | T05 | Minutnik włączeń CO | RW |
+| 6002 | T07 | Opóźnienie żądania z termostatu pokojowego (TA): 0-24 = 0-240 s co 10 s (wartość z panelu) | ×10 s, RW |
 | 6010 | A03 | Minimalna prędkość pompy obiegowej | %, RW |
 | 6011 | A04 | Maksymalna prędkość pompy obiegowej | %, RW |
 | 6013 | A12 | Odpowietrzanie systemu (automatyczne po włączeniu zasilania) | 0/1, RW |
@@ -167,7 +168,7 @@ Wszystkie ustawienia RW w wierszach 44xx/60xx zostały zweryfikowane w obie stro
 Wciąż nierozpoznane:
 - **Zapisywalne 0/1:** `2102, 4449, 4600` (wszystkie 0).
 - **Ustawienie:** `4452` (251 / 236 / 2 na trzech jednostkach).
-- **Zawsze zero:** `512, 3061, 4011, 4588, 6002, 6014, 6503, 6504` (512, 3061, 6002 i 6504 poruszyły się raz w czerwcu, może podczas chłodzenia).
+- **Zawsze zero:** `512, 3061, 4588, 6014, 6503, 6504` (512, 3061 i 6504 poruszyły się raz w czerwcu, może podczas chłodzenia).
 
 Jeśli potrafisz skojarzyć którykolwiek z nich ze stanem pracy, **załóż issue albo PR**.
 
