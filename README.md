@@ -70,7 +70,7 @@ packages/
   tt_heat_pump.yaml     D24, D71 frequency, D72/D73/D74, D76 fan, D77 EEV, compressor power step
   tt_dhw.yaml           D03 tank temperature, DHW water_heater (2095), T02, DHW boost (4011)
   tt_heating.yaml       outdoor probe R01, zone 1 limits R04/R05/R12/R13, zone 1 thermostat enable (2010)
-  tt_integration.yaml   menu I: I01, I02, I03, I04, I05, I07, I09
+  tt_integration.yaml   menu I: I01, I02, I03, I04, I05, I07, I09, I10
   tt_installer.yaml     P15, A12, A03/A04 pump speed, T04, T05, T07
   tt_computed.yaml      Delta T, thermal power, mean loop temperature, thermal lift, HP return - boiler flow
   tt_gas.yaml           estimated gas consumption (needs tt_status + tt_circuit)
@@ -92,7 +92,7 @@ To drop a feature, delete its line from `packages:` in the main file. `tt_core`,
 ## What it does
 
 - **Reads:** flow/return/DHW/outdoor temperatures, **calculated flow setpoint (D04)**, compressor frequency and power step, compressor/discharge/evaporator temperatures, EEV position, outdoor fan speed, 3-way valve position, heat-pump/boiler/system status, fault code + description, system model (D61), firmware version (D91).
-- **Controls:** operating mode (2000), DHW setpoint (2095), **DHW boost (4011)**, weather-curve outdoor probe (R01), zone-1 heating/cooling limits (R04/R05/R12/R13), circulation pump min/max speed (A03/A04), zone-1 thermostat, **gas/heat-pump integration (I01–I09)**, T02, T04, T05, T07, P15 anti-legionella, A12 system vent.
+- **Controls:** operating mode (2000), DHW setpoint (2095), **DHW boost (4011)**, weather-curve outdoor probe (R01), zone-1 heating/cooling limits (R04/R05/R12/R13), circulation pump min/max speed (A03/A04), zone-1 thermostat, **gas/heat-pump integration (I01–I10)**, T02, T04, T05, T07, P15 anti-legionella, A12 system vent.
 - **Calculated:** Delta T, mean loop temperature, thermal lift, heat-pump return − boiler flow difference, **estimated gas consumption**.
 - BMS connection toggle (start/stop polling).
 
@@ -119,7 +119,7 @@ The unit does not report gas use, so `tt_gas.yaml` counts the time the gas boile
 - **No Victrix / Magis M TOP interface:** the low BMS registers from the Victrix and Magis M TOP manuals are not available on the Magis V2 (fw 6.0). 512 is **read-only** (a write returns exception 2), 256 and the 0x04 input registers don't exist, and 61440–61442 (Modbus config) return exception 2. There is no BMS heat request and no BMS "silent mode" on this bus.
 - **Fixed map:** entering the installer PIN does **not** expose more registers. Heating-curve breakpoints (R02/R03) and most menu parameters are not on this bus.
 - **Menu banks:** the **44xx** bank holds integration / installer settings (menus I, T, P). The **65xx** bank holds info read-outs (menu D: D97–D99, D61, D91, internal clock).
-- **Settings not exposed on T-/T+** (changed on the unit, no register moved): I08, I10, P07 (but D06 reads *after* the P07 correction), P11, P13, P21, P23, P24, T09, T23, **U11 night function** (it goes to the outdoor unit as a 30 % frequency limit on D+/D-, not here), A05, A18, A31, A41, maintenance menu M (M13, M15–M17). Zone remote-panel settings live on the D+/D- bus.
+- **Settings not exposed on T-/T+** (changed on the unit, no register moved): I08, P07 (but D06 reads *after* the P07 correction), P11, P13, P21, P23, P24, T09, T23, **U11 night function** (it goes to the outdoor unit as a 30 % frequency limit on D+/D-, not here), A05, A18, A31, A41, maintenance menu M (M13, M15–M17). Zone remote-panel settings live on the D+/D- bus.
 - **Maintenance menu:** entering menu **M** sets fault code **193** (E193 "test mode") in register 2100 until you leave it.
 - **Naming:** Immergas "PDU N" = holding register address N.
 
@@ -137,7 +137,7 @@ The unit does not report gas use, so `tt_gas.yaml` counts the time the gas boile
 | 3002 | D06 | Outdoor temperature | ×0.1 °C |
 | 3003 | D04 | **Calculated flow setpoint** from the heating curve; 0 = no heat demand | ×0.1 °C |
 | 3016 | D03 | Storage tank unit temperature | ×0.1 °C |
-| 3027 | — | Candidate: 1 = heat pump excluded / heating by the boiler only (seen once, I10 test) | 0/1 |
+| 3027 | — | **Heat pump excluded**: 1 while only the boiler heats (outdoor temperature below I10, D99 7) or during a heat pump communication loss (E189) | 0/1 |
 | 3028 | D22 | Generator 3-way valve (1 = DHW, 0 = CH) | 0/1 |
 | 3029 | — | **Secondary generator (gas boiler) flow temperature**; `-32768` on units without a boiler | ×0.1 °C |
 | 3054 | D14 | Circulator pump flow rate (0 while the pump is stopped) | l/h |
@@ -155,6 +155,7 @@ The unit does not report gas use, so `tt_gas.yaml` counts the time the gas boile
 | 4451 | I05 | Integration activation mode (0 = AU automatic, 1 = MA manual) | RW |
 | 4453 | I02 | System (CH) integration enabling (1 = AL, 0 = OFF) | 0/1, RW |
 | 4454 | I01 | DHW integration enabling (1 = AL, 0 = OFF) | 0/1, RW |
+| 4452 | I10 | Central heating (system) integration activation temperature | °C as a signed byte in the low byte (251 = −5 °C), RW |
 | 4455 | I09 | DHW activation temperature | °C, signed, RW |
 | 4468 | I04 | Central heating max wait time | min, RW |
 | 4469 | I03 | DHW max wait time | min, RW |
@@ -188,7 +189,6 @@ All RW settings in the 44xx / 60xx rows were verified both ways: changing them o
 
 Still unidentified:
 - **Writable 0/1:** `2102, 4449, 4600` (all 0).
-- **Setting:** `4452` (251 / 236 / 2 on three units).
 - **Always zero:** `512, 3061, 4588, 6014, 6503, 6504` (512, 3061 and 6504 moved once in June, possibly in cooling).
 
 If you can correlate any of these with operating states, **please open an issue or PR**.

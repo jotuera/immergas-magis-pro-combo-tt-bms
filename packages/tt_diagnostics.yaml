@@ -14,17 +14,6 @@ sensor:
     entity_category: diagnostic
     accuracy_decimals: 0
 
-  # Candidate: 1 = heat pump excluded / heating by boiler only (seen once, I10 = 35 test).
-  - platform: modbus_controller
-    modbus_controller_id: tt_bms_diag
-    name: "${n_tt_pdu_3027}"
-    id: tt_pdu_3027
-    register_type: holding
-    address: 3027
-    value_type: U_WORD
-    entity_category: diagnostic
-    accuracy_decimals: 0
-
   - platform: modbus_controller
     modbus_controller_id: tt_bms_diag
     name: "${n_tt_pdu_3061}"
@@ -34,22 +23,6 @@ sensor:
     value_type: U_WORD
     entity_category: diagnostic
     accuracy_decimals: 0
-
-  # 4452 - constant (25.1 here, 23.6 on another unit) -> a setting, not a refrigerant temperature. Meaning unknown.
-  - platform: modbus_controller
-    modbus_controller_id: tt_bms_diag
-    name: "${n_tt_pdu_4452}"
-    id: tt_pdu_4452
-    entity_category: diagnostic
-    register_type: holding
-    address: 4452
-    value_type: S_WORD
-    unit_of_measurement: "°C"
-    accuracy_decimals: 1
-    filters:
-      # -32768 (0x8000) = probe not fitted on this unit -> report "unknown" instead of -3276.8
-      - lambda: |-
-          return x == -32768 ? NAN : x * 0.1f;
 
   - platform: modbus_controller
     modbus_controller_id: tt_bms_diag

@@ -53,7 +53,7 @@ packages/
   tt_heat_pump.yaml     D24, częstotliwość D71, D72/D73/D74, wentylator D76, EEV D77, stopień mocy sprężarki
   tt_dhw.yaml           D03 temperatura zasobnika, water_heater CWU (2095), T02
   tt_heating.yaml       sonda zewnętrzna R01, limity strefy 1 R04/R05/R12/R13, włączenie termostatu strefy 1 (2010)
-  tt_integration.yaml   menu I: I01, I02, I03, I04, I05, I07, I09
+  tt_integration.yaml   menu I: I01, I02, I03, I04, I05, I07, I09, I10
   tt_installer.yaml     P15, A12, prędkość pompy A03/A04, T04, T05, T07
   tt_computed.yaml      Delta T, moc cieplna, średnia temperatura obiegu, thermal lift, powrót PC - zasilanie kotła
   tt_gas.yaml           szacowane zużycie gazu (wymaga tt_status + tt_circuit)
@@ -75,7 +75,7 @@ packages/
 ## Co robi
 
 - **Odczytuje:** temperatury zasilania/powrotu/CWU/zewnętrzną, **wyliczoną nastawę zasilania (D04)**, częstotliwość i stopień mocy sprężarki, temperatury sprężarki/tłoczenia/parownika, pozycję EEV, obroty wentylatora zewnętrznego, pozycję zaworu 3-drogowego, status pompy ciepła/kotła/systemu, kod błędu + opis, model systemu (D61), wersję firmware (D91).
-- **Steruje:** trybem pracy (2000), nastawą CWU (2095), sondą zewnętrzną krzywej grzewczej (R01), limitami grzania/chłodzenia strefy 1 (R04/R05/R12/R13), minimalną/maksymalną prędkością pompy obiegowej (A03/A04), termostatem strefy 1, **integracją gaz/pompa ciepła (I01–I09)**, T02, T04, T05, T07, anty-legionellą P15, odpowietrzaniem systemu A12.
+- **Steruje:** trybem pracy (2000), nastawą CWU (2095), sondą zewnętrzną krzywej grzewczej (R01), limitami grzania/chłodzenia strefy 1 (R04/R05/R12/R13), minimalną/maksymalną prędkością pompy obiegowej (A03/A04), termostatem strefy 1, **integracją gaz/pompa ciepła (I01–I10)**, T02, T04, T05, T07, anty-legionellą P15, odpowietrzaniem systemu A12.
 - **Wylicza:** Delta T, średnią temperaturę obiegu, thermal lift, różnicę powrót pompy ciepła − zasilanie kotła, **szacowane zużycie gazu**.
 - Przełącznik połączenia BMS (start/stop odpytywania).
 
@@ -99,7 +99,7 @@ Urządzenie nie raportuje zużycia gazu, więc `tt_gas.yaml` liczy czas pracy ko
 - **Brak interfejsu Victrix / Magis M TOP:** niskie rejestry BMS z instrukcji Victrix i Magis M TOP nie są dostępne na Magis V2 (fw 6.0). 512 jest **tylko do odczytu** (zapis zwraca wyjątek 2), 256 i rejestry wejściowe 0x04 nie istnieją, a 61440–61442 (konfiguracja Modbus) zwracają wyjątek 2. Na tej magistrali nie ma żądania ciepła BMS ani "trybu cichego" BMS.
 - **Stała mapa:** wpisanie PIN-u instalatora **nie** odsłania więcej rejestrów. Punkty krzywej grzewczej (R02/R03) i większość parametrów menu nie są na tej magistrali.
 - **Banki menu:** bank **44xx** zawiera ustawienia integracji/instalatora (menu I, T, P). Bank **65xx** zawiera odczyty informacyjne (menu D: D97–D99, D61, D91, zegar wewnętrzny).
-- **Ustawienia niewidoczne na T-/T+** (zmienione na jednostce, żaden rejestr się nie rusza): I08, I10, P07 (ale D06 czyta *po* korekcie P07), P11, P13, P21, P23, P24, T09, T23, **funkcja nocna U11** (idzie do jednostki zewnętrznej jako limit częstotliwości 30% na D+/D-, nie tutaj), A05, A18, A31, A41, menu serwisowe M (M13, M15–M17). Ustawienia zdalnego panelu strefy są na magistrali D+/D-.
+- **Ustawienia niewidoczne na T-/T+** (zmienione na jednostce, żaden rejestr się nie rusza): I08, P07 (ale D06 czyta *po* korekcie P07), P11, P13, P21, P23, P24, T09, T23, **funkcja nocna U11** (idzie do jednostki zewnętrznej jako limit częstotliwości 30% na D+/D-, nie tutaj), A05, A18, A31, A41, menu serwisowe M (M13, M15–M17). Ustawienia zdalnego panelu strefy są na magistrali D+/D-.
 - **Menu serwisowe:** wejście w menu **M** ustawia kod błędu **193** (E193 "tryb testowy") w rejestrze 2100, dopóki go nie opuścisz.
 - **Nazewnictwo:** "PDU N" u Immergasa = adres rejestru trzymającego N.
 
@@ -117,7 +117,7 @@ Urządzenie nie raportuje zużycia gazu, więc `tt_gas.yaml` liczy czas pracy ko
 | 3002 | D06 | Temperatura zewnętrzna | ×0,1°C |
 | 3003 | D04 | **Wyliczona nastawa zasilania** z krzywej grzewczej; 0 = brak żądania ciepła | ×0,1°C |
 | 3016 | D03 | Temperatura zasobnika CWU | ×0,1°C |
-| 3027 | — | Kandydat: 1 = pompa ciepła wykluczona / grzanie tylko kotłem (widziane raz, test I10) | 0/1 |
+| 3027 | — | **Pompa ciepła wykluczona**: 1 gdy grzeje tylko kocioł (temperatura zewnętrzna poniżej I10, D99 7) albo przy utracie łączności z pompą (E189) | 0/1 |
 | 3028 | D22 | Zawór 3-drogowy generatora (1 = CWU, 0 = CO) | 0/1 |
 | 3029 | — | **Temperatura zasilania generatora dodatkowego (kocioł gazowy)**; `-32768` na jednostkach bez kotła | ×0,1°C |
 | 3054 | D14 | Przepływ pompy obiegowej (0 gdy pompa stoi) | l/h |
@@ -134,6 +134,7 @@ Urządzenie nie raportuje zużycia gazu, więc `tt_gas.yaml` liczy czas pracy ko
 | 4451 | I05 | Tryb aktywacji integracji (0 = AU automatyczny, 1 = MA ręczny) | RW |
 | 4453 | I02 | Włączenie integracji systemu (CO) (1 = AL, 0 = OFF) | 0/1, RW |
 | 4454 | I01 | Włączenie integracji CWU (1 = AL, 0 = OFF) | 0/1, RW |
+| 4452 | I10 | Temperatura aktywacji integracji instalacji (CO) | °C jako bajt ze znakiem w młodszym bajcie (251 = −5 °C), RW |
 | 4455 | I09 | Temperatura aktywacji CWU | °C, ze znakiem, RW |
 | 4468 | I04 | Maksymalny czas oczekiwania CO | min, RW |
 | 4469 | I03 | Maksymalny czas oczekiwania CWU | min, RW |
@@ -167,7 +168,6 @@ Wszystkie ustawienia RW w wierszach 44xx/60xx zostały zweryfikowane w obie stro
 
 Wciąż nierozpoznane:
 - **Zapisywalne 0/1:** `2102, 4449, 4600` (wszystkie 0).
-- **Ustawienie:** `4452` (251 / 236 / 2 na trzech jednostkach).
 - **Zawsze zero:** `512, 3061, 4588, 6014, 6503, 6504` (512, 3061 i 6504 poruszyły się raz w czerwcu, może podczas chłodzenia).
 
 Jeśli potrafisz skojarzyć którykolwiek z nich ze stanem pracy, **załóż issue albo PR**.

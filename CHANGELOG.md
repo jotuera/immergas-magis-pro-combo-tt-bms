@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.6.0
+
+- **Decoded 4452 = I10** (outdoor temperature that activates the central heating integration). The register holds the
+  value as a signed byte in the low byte: 251 = -5 C, 236 = -20 C, 2 = +2 C. Verified on a Magis Combo 9 Plus V2
+  (fw 6.0): I10 -5 -> +15 -> -5 on the panel.
+- **Decoded 3027 = heat pump excluded:** 1 while only the boiler heats (I10 = +15 at 9 C outside: D99 7, then
+  3027 = 1; back to -5: 3027 = 0). It is also set during a communication loss with the heat pump board (E189).
+- **New control:** slider `I10 Central heating activation temperature` (-25...+35 C) in `tt_integration.yaml`.
+- **New binary sensor:** `Heat pump excluded` in `tt_status.yaml` (read every 30 s).
+- **Removed:** the diagnostic `PDU 3027` and `PDU 4452`. Delete them in HA.
+
 ## v2.5.0
 
 - **New diagnostic entity:** `Project version` (text, `tt_status.yaml`) shows the version of the T-/T+ packages the

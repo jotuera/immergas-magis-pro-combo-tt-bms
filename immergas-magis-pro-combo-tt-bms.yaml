@@ -4,7 +4,7 @@
 # slave 11, 9600 8N2): operating mode, flow/return/DHW temperatures, heat pump data, boiler faults,
 # integration and installer settings, estimated gas use. No cloud. See README.md for wiring and the register map.
 #
-# Project : jotuera.immergas-magis-pro-combo-tt-bms  |  v2.5.0
+# Project : jotuera.immergas-magis-pro-combo-tt-bms  |  v2.6.0
 # Repo    : https://github.com/jotuera/immergas-magis-pro-combo-tt-bms
 # License : MIT (c) 2026 JoTu
 # Tested  : Magis Combo 9 Plus V2 (fw 6.0), Magis Pro V2 (community).
@@ -72,7 +72,7 @@ button:
 packages:
   tt_bms:
     url: https://github.com/jotuera/immergas-magis-pro-combo-tt-bms
-    ref: v2.5.0
+    ref: v2.6.0
     refresh: 1d
     files:
       - packages/tt_core.yaml          # UART, Modbus, polling, "BMS connection" switch   (required)
@@ -81,7 +81,7 @@ packages:
       - packages/tt_heat_pump.yaml     # D24, D71-D77, compressor power step
       - packages/tt_dhw.yaml           # D03, DHW water_heater, T02, DHW boost
       - packages/tt_heating.yaml       # R01, R04/R05/R12/R13, zone 1 thermostat enable
-      - packages/tt_integration.yaml   # menu I (gas/heat pump integration)
+      - packages/tt_integration.yaml   # menu I (gas/heat pump integration), I01-I10
       - packages/tt_installer.yaml     # P15, A12, A03/A04, T04, T05, T07
       - packages/tt_computed.yaml      # Delta T, thermal power, lift, ...
       - packages/tt_gas.yaml           # estimated gas consumption (Energy dashboard)

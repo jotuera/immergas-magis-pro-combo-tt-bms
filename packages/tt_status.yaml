@@ -235,6 +235,17 @@ text_sensor:
       return {std::string(buf)};
 
 binary_sensor:
+  # 3027 - heat pump excluded: 1 while the unit heats with the boiler only (outdoor temperature below I10, D99 7),
+  # also during a communication loss with the heat pump board (E189).
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_hp_excluded}"
+    id: tt_hp_excluded
+    icon: mdi:heat-pump-outline
+    register_type: holding
+    address: 3027
+    bitmask: 1
+
   - platform: template
     name: "${n_tt_error_active}"
     id: tt_error_active
