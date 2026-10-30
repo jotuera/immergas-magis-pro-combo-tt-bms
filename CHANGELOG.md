@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.5.0
+
+- **New diagnostic entity:** `Project version` (text, `tt_status.yaml`) shows the version of the T-/T+ packages the
+  device runs (`tt_project_version`), like `Project version` in dd-modbus.
+
 ## v2.4.0
 
 - **Decoded 6002 = T07** (room thermostat request delay, 0-240 s in 10 s steps; the register holds the panel value,

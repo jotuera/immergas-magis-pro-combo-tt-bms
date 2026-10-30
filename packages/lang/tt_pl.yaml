@@ -196,6 +196,7 @@ substitutions:
   n_tt_i05_integration_mode: "${tt_name_prefix} - I05 Tryb aktywacji integracji"
   n_tt_i07_activation_band: "${tt_name_prefix} - I07 Przedział aktywacji"
   n_tt_i09_dhw_activation_temp: "${tt_name_prefix} - I09 Temperatura aktywacji c.w.u."
+  n_tt_meta_version: "${tt_name_prefix} - Wersja projektu"
   n_tt_mean_loop_temp: "${tt_name_prefix} - Temperatura średnia obiegu"
   n_tt_operation_mode_select: "${tt_name_prefix} - Tryb pracy systemu"
   n_tt_p15_legionella: "${tt_name_prefix} - P15 Funkcja anty-legionella"

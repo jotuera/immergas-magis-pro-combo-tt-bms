@@ -107,6 +107,16 @@ sensor:
     accuracy_decimals: 0
 
 text_sensor:
+  # Version of the T-/T+ packages (tt_project_version in tt_core.yaml).
+  - platform: template
+    name: "${n_tt_meta_version}"
+    id: tt_meta_version
+    icon: mdi:tag-outline
+    entity_category: diagnostic
+    update_interval: 3600s
+    lambda: |-
+      return std::string("${tt_project_version}");
+
   - platform: template
     name: "${n_tt_status_pompy_ciepla_text}"
     id: tt_status_pompy_ciepla_text
