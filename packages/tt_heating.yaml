@@ -1,5 +1,5 @@
 # Immergas Magis Pro / Combo T-/T+ BMS - package "tt_heating"
-# Zone 1 heating/cooling limits R04/R05/R12/R13 and the zone 1 thermostat enable (2010).
+# Outdoor probe for the weather curve R01, zone 1 heating/cooling limits R04/R05/R12/R13 and the zone 1 thermostat enable (2010).
 # Part of jotuera/immergas-magis-pro-combo-tt-bms (MIT). Loaded by the main YAML through `packages:`.
 # File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
 
@@ -13,6 +13,22 @@ switch:
     address: 2010
     bitmask: 1
     entity_category: config
+
+select:
+  # R01 (reg. 4201) - outdoor temperature probe for the weather curve: 0 = OFF (fixed flow setpoint),
+  # 1 = OU (outdoor unit probe), 2 = IU (probe on the indoor unit). Confirmed on the unit (issue #4).
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_r01_outdoor_probe}"
+    id: tt_r01_outdoor_probe
+    icon: mdi:thermometer-lines
+    entity_category: config
+    address: 4201
+    value_type: U_WORD
+    optionsmap:
+      "${t_tt_r01_off}": 0
+      "${t_tt_r01_ou}": 1
+      "${t_tt_r01_iu}": 2
 
 number:
   # R05 — Zone 1 min CH temperature. Register reads stably.

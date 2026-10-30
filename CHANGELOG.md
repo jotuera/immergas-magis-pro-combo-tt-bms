@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.3.0
+
+- **Decoded 4201 = R01** (outdoor temperature probe for the weather curve): 0 = OFF, 1 = OU, 2 = IU. Found by @Bettapro in #4 and
+  verified on a Magis Combo 9 Plus V2 (fw 6.0): R01 OFF switches D04 from the curve to a fixed flow setpoint.
+- **New control:** select `R01 Outdoor temperature probe` in `tt_heating.yaml` (read every 30 s, writable).
+  It replaces the diagnostic `PDU 4201`, which you can delete in HA.
+
 ## v2.2.0
 
 - New substitution **`tt_name_prefix`** (default `"Immergas"`): the first part of every entity name

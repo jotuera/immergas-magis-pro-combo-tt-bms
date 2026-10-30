@@ -69,7 +69,7 @@ packages/
   tt_circuit.yaml       D20/D08 flow/return, boiler flow (3029), D14, D06, D04, D22 3-way valve  (required)
   tt_heat_pump.yaml     D24, D71 frequency, D72/D73/D74, D76 fan, D77 EEV, compressor power step
   tt_dhw.yaml           D03 tank temperature, DHW water_heater (2095), T02, DHW boost (4011)
-  tt_heating.yaml       zone 1 limits R04/R05/R12/R13, zone 1 thermostat enable (2010)
+  tt_heating.yaml       outdoor probe R01, zone 1 limits R04/R05/R12/R13, zone 1 thermostat enable (2010)
   tt_integration.yaml   menu I: I01, I02, I03, I04, I05, I07, I09
   tt_installer.yaml     P15, A12, A03/A04 pump speed, T04, T05
   tt_computed.yaml      Delta T, thermal power, mean loop temperature, thermal lift, HP return - boiler flow
@@ -92,7 +92,7 @@ To drop a feature, delete its line from `packages:` in the main file. `tt_core`,
 ## What it does
 
 - **Reads:** flow/return/DHW/outdoor temperatures, **calculated flow setpoint (D04)**, compressor frequency and power step, compressor/discharge/evaporator temperatures, EEV position, outdoor fan speed, 3-way valve position, heat-pump/boiler/system status, fault code + description, system model (D61), firmware version (D91).
-- **Controls:** operating mode (2000), DHW setpoint (2095), **DHW boost (4011)**, zone-1 heating/cooling limits (R04/R05/R12/R13), circulation pump min/max speed (A03/A04), zone-1 thermostat, **gas/heat-pump integration (I01–I09)**, T02, T04, T05, P15 anti-legionella, A12 system vent.
+- **Controls:** operating mode (2000), DHW setpoint (2095), **DHW boost (4011)**, weather-curve outdoor probe (R01), zone-1 heating/cooling limits (R04/R05/R12/R13), circulation pump min/max speed (A03/A04), zone-1 thermostat, **gas/heat-pump integration (I01–I09)**, T02, T04, T05, P15 anti-legionella, A12 system vent.
 - **Calculated:** Delta T, mean loop temperature, thermal lift, heat-pump return − boiler flow difference, **estimated gas consumption**.
 - BMS connection toggle (start/stop polling).
 
@@ -143,6 +143,7 @@ The unit does not report gas use, so `tt_gas.yaml` counts the time the gas boile
 | 3054 | D14 | Circulator pump flow rate (0 while the pump is stopped) | l/h |
 | 3056 | D24 | Chiller circuit liquid temperature | ×0.1 °C |
 | 4011 | — | **DHW tank temperature supplied by the BMS**: overrides the tank probe while > 0 (D03 shows this value, the unit heats DHW as if the tank were cold); 0 = own probe | ×0.1 °C, RW |
+| 4201 | R01 | Outdoor temperature probe for the weather curve: 0 = OFF (fixed flow setpoint), 1 = OU (outdoor unit probe), 2 = IU (probe on the indoor unit) | enum, RW |
 | 4202 | A11 | Outdoor Unit model | code (9 = 9 kW) |
 | 4350 | R05 | Zone 1 minimum central heating | °C, RW |
 | 4351 | R04 | Zone 1 maximum central heating | °C, RW |
@@ -186,7 +187,6 @@ All RW settings in the 44xx / 60xx rows were verified both ways: changing them o
 
 Still unidentified:
 - **Writable 0/1:** `2102, 4449, 4600` (all 0).
-- **Constant 1:** `4201` (0 on another unit without a zone panel; candidate "zone panel present on D+/D-").
 - **Setting:** `4452` (251 / 236 / 2 on three units).
 - **Always zero:** `512, 3061, 4588, 6002, 6014, 6503, 6504` (512, 3061, 6002 and 6504 moved once in June, possibly in cooling).
 

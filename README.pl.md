@@ -52,7 +52,7 @@ packages/
                         zawór 3-drogowy D22
   tt_heat_pump.yaml     D24, częstotliwość D71, D72/D73/D74, wentylator D76, EEV D77, stopień mocy sprężarki
   tt_dhw.yaml           D03 temperatura zasobnika, water_heater CWU (2095), T02
-  tt_heating.yaml       limity strefy 1 R04/R05/R12/R13, włączenie termostatu strefy 1 (2010)
+  tt_heating.yaml       sonda zewnętrzna R01, limity strefy 1 R04/R05/R12/R13, włączenie termostatu strefy 1 (2010)
   tt_integration.yaml   menu I: I01, I02, I03, I04, I05, I07, I09
   tt_installer.yaml     P15, A12, prędkość pompy A03/A04, T04, T05
   tt_computed.yaml      Delta T, moc cieplna, średnia temperatura obiegu, thermal lift, powrót PC - zasilanie kotła
@@ -75,7 +75,7 @@ packages/
 ## Co robi
 
 - **Odczytuje:** temperatury zasilania/powrotu/CWU/zewnętrzną, **wyliczoną nastawę zasilania (D04)**, częstotliwość i stopień mocy sprężarki, temperatury sprężarki/tłoczenia/parownika, pozycję EEV, obroty wentylatora zewnętrznego, pozycję zaworu 3-drogowego, status pompy ciepła/kotła/systemu, kod błędu + opis, model systemu (D61), wersję firmware (D91).
-- **Steruje:** trybem pracy (2000), nastawą CWU (2095), limitami grzania/chłodzenia strefy 1 (R04/R05/R12/R13), minimalną/maksymalną prędkością pompy obiegowej (A03/A04), termostatem strefy 1, **integracją gaz/pompa ciepła (I01–I09)**, T02, T04, T05, anty-legionellą P15, odpowietrzaniem systemu A12.
+- **Steruje:** trybem pracy (2000), nastawą CWU (2095), sondą zewnętrzną krzywej grzewczej (R01), limitami grzania/chłodzenia strefy 1 (R04/R05/R12/R13), minimalną/maksymalną prędkością pompy obiegowej (A03/A04), termostatem strefy 1, **integracją gaz/pompa ciepła (I01–I09)**, T02, T04, T05, anty-legionellą P15, odpowietrzaniem systemu A12.
 - **Wylicza:** Delta T, średnią temperaturę obiegu, thermal lift, różnicę powrót pompy ciepła − zasilanie kotła, **szacowane zużycie gazu**.
 - Przełącznik połączenia BMS (start/stop odpytywania).
 
@@ -122,6 +122,7 @@ Urządzenie nie raportuje zużycia gazu, więc `tt_gas.yaml` liczy czas pracy ko
 | 3029 | — | **Temperatura zasilania generatora dodatkowego (kocioł gazowy)**; `-32768` na jednostkach bez kotła | ×0,1°C |
 | 3054 | D14 | Przepływ pompy obiegowej (0 gdy pompa stoi) | l/h |
 | 3056 | D24 | Temperatura czynnika w obiegu chłodniczym | ×0,1°C |
+| 4201 | R01 | Sonda temperatury zewnętrznej dla krzywej grzewczej: 0 = OFF (stała zadana zasilania), 1 = OU (sonda jednostki zewnętrznej), 2 = IU (sonda na jednostce wewnętrznej) | enum, RW |
 | 4202 | A11 | Model jednostki zewnętrznej | kod (9 = 9 kW) |
 | 4350 | R05 | Minimalna temperatura CO Strefy 1 | °C, RW |
 | 4351 | R04 | Maksymalna temperatura CO Strefy 1 | °C, RW |
@@ -165,7 +166,6 @@ Wszystkie ustawienia RW w wierszach 44xx/60xx zostały zweryfikowane w obie stro
 
 Wciąż nierozpoznane:
 - **Zapisywalne 0/1:** `2102, 4449, 4600` (wszystkie 0).
-- **Stała 1:** `4201` (0 na innej jednostce bez panelu strefy; kandydat na "panel strefy obecny na D+/D-").
 - **Ustawienie:** `4452` (251 / 236 / 2 na trzech jednostkach).
 - **Zawsze zero:** `512, 3061, 4011, 4588, 6002, 6014, 6503, 6504` (512, 3061, 6002 i 6504 poruszyły się raz w czerwcu, może podczas chłodzenia).
 
