@@ -135,7 +135,7 @@ Urządzenie nie raportuje zużycia gazu, więc `tt_gas.yaml` liczy czas pracy ko
 | 4453 | I02 | Włączenie integracji systemu (CO) (1 = AL, 0 = OFF) | 0/1, RW |
 | 4454 | I01 | Włączenie integracji CWU (1 = AL, 0 = OFF) | 0/1, RW |
 | 4452 | I10 | Temperatura aktywacji integracji instalacji (CO) | °C jako bajt ze znakiem w młodszym bajcie (251 = −5 °C), RW |
-| 4455 | I09 | Temperatura aktywacji CWU | °C, ze znakiem, RW |
+| 4455 | I09 | Temperatura aktywacji integracji CWU | °C jako bajt ze znakiem w młodszym bajcie (251 = −5 °C), RW |
 | 4468 | I04 | Maksymalny czas oczekiwania CO | min, RW |
 | 4469 | I03 | Maksymalny czas oczekiwania CWU | min, RW |
 | 4479 | I07 | Pasmo aktywacji | °C, RW |

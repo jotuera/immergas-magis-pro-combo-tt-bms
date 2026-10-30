@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.6.1
+
+- **Fix I09** (register 4455, DHW integration activation temperature): like I10, the unit stores it as a signed byte
+  in the low byte. I09 = -5 C on the panel read as 251 in v2.6.0, and writing a negative value from HA sent the wrong
+  format. It now reads and writes -25...+35 C correctly.
+
 ## v2.6.0
 
 - **Decoded 4452 = I10** (outdoor temperature that activates the central heating integration). The register holds the

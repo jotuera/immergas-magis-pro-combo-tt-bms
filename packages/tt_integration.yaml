@@ -82,6 +82,8 @@ number:
     step: 1
     mode: slider
 
+  # I09 (reg. 4455) - outdoor temperature that activates the DHW integration. Signed byte in the low byte, like I10
+  # (-5 C = 251; confirmed on the unit).
   - platform: modbus_controller
     modbus_controller_id: tt_bms
     name: "${n_tt_i09_dhw_activation_temp}"
@@ -89,12 +91,18 @@ number:
     icon: mdi:thermometer-chevron-down
     register_type: holding
     address: 4455
-    value_type: S_WORD
+    value_type: U_WORD
     unit_of_measurement: "°C"
     min_value: -25
     max_value: 35
     step: 1
     mode: slider
+    lambda: |-
+      int v = (int) x & 0xFF;
+      return v > 127 ? v - 256 : v;
+    write_lambda: |-
+      int v = (int) lroundf(x);
+      return v < 0 ? v + 256 : v;
 
   # I10 (reg. 4452) - outdoor temperature that activates the system (CH) integration: below it the heat pump is
   # excluded and the boiler heats (D99 7, "Heat pump excluded" = 1). The register holds the value as a signed byte

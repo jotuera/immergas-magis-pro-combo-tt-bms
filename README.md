@@ -156,7 +156,7 @@ The unit does not report gas use, so `tt_gas.yaml` counts the time the gas boile
 | 4453 | I02 | System (CH) integration enabling (1 = AL, 0 = OFF) | 0/1, RW |
 | 4454 | I01 | DHW integration enabling (1 = AL, 0 = OFF) | 0/1, RW |
 | 4452 | I10 | Central heating (system) integration activation temperature | °C as a signed byte in the low byte (251 = −5 °C), RW |
-| 4455 | I09 | DHW activation temperature | °C, signed, RW |
+| 4455 | I09 | DHW integration activation temperature | °C as a signed byte in the low byte (251 = −5 °C), RW |
 | 4468 | I04 | Central heating max wait time | min, RW |
 | 4469 | I03 | DHW max wait time | min, RW |
 | 4479 | I07 | Activation band | °C, RW |
