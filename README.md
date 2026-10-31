@@ -155,6 +155,7 @@ The unit does not report gas use, so `tt_gas.yaml` counts the time the gas boile
 | 4451 | I05 | Integration activation mode (0 = AU automatic, 1 = MA manual) | RW |
 | 4453 | I02 | System (CH) integration enabling (1 = AL, 0 = OFF) | 0/1, RW |
 | 4454 | I01 | DHW integration enabling (1 = AL, 0 = OFF) | 0/1, RW |
+| 4449 | — | **Force boiler heating**: 1 = heat pump stopped, the boiler heats (D99 7, D97 351, D98 251) | 0/1, RW |
 | 4452 | I10 | Central heating (system) integration activation temperature | °C as a signed byte in the low byte (251 = −5 °C), RW |
 | 4455 | I09 | DHW integration activation temperature | °C as a signed byte in the low byte (251 = −5 °C), RW |
 | 4468 | I04 | Central heating max wait time | min, RW |
@@ -167,6 +168,7 @@ The unit does not report gas use, so `tt_gas.yaml` counts the time the gas boile
 | 4585 | D72 | **Compressor temperature** (top, = NASA 0x8280) | ×0.1 °C |
 | 4586 | — | **Compressor power step** 0–6 (25 Hz = 1, 30 = 2, 43 = 3, 51 = 4, 58 = 5, 61 = 6) | step |
 | 4587 | D76 | Outdoor unit fan speed (candidate) | rpm |
+| 4600 | — | **Start system venting** now (E139, D99 42, panel "AP99"); 0 stops it | 0/1, RW |
 | 6000 | T05 | Central heating ignitions timer | RW |
 | 6002 | T07 | Room thermostat (TA) request delay: 0-24 = 0-240 s in 10 s steps (panel value) | ×10 s, RW |
 | 6010 | A03 | Circulation pump minimum speed | %, RW |
@@ -181,14 +183,14 @@ The unit does not report gas use, so `tt_gas.yaml` counts the time the gas boile
 
 All RW settings in the 44xx / 60xx rows were verified both ways: changing them on the keypad moves the register, and writing them from Home Assistant changes the value on the unit.
 
-**D97 heat pump demand:** 300 standby · 332/390 heating · 352 heating (thermostat call) · 322 DHW on the heat pump (fw 4.3) · 342 cooling request · 336 excluded by the I10 threshold (boiler heats).
-**D98 thermal generator demand:** 200 standby · 215 boiler heating (cycle) · 232 heating · 252 heating (thermostat call, boiler not firing) · 236 heating by the boiler only.
-**D99 system state:** 0 / 82 standby · 1 cooling request · 6 heating request · 7 heating by the boiler only (heat pump excluded by I10) · 8 heating cycle · 41 pump overrun after CH (~3 min) · 44 end of DHW on the heat pump (~3 min) · 45 end of DHW (~1 min) · 61 DHW on the heat pump · 62 DHW on the gas boiler (Combo) · 64 DHW with the electric heater. Codes were observed on fw 6.0. On fw 4.3, plain DHW was reported as 61.
+**D97 heat pump demand:** 300 standby · 332/390 heating · 352 heating (thermostat call) · 322 DHW on the heat pump (fw 4.3) · 342 cooling request · 336 excluded by the I10 threshold (boiler heats) · 351 stopped by the BMS (4449, boiler heats).
+**D98 thermal generator demand:** 200 standby · 215 boiler heating (cycle) · 232 heating · 252 heating (thermostat call, boiler not firing) · 236 heating by the boiler only · 251 boiler heating forced by the BMS (4449).
+**D99 system state:** 0 / 82 standby · 1 cooling request · 6 heating request · 7 heating by the boiler only (heat pump excluded by I10) · 8 heating cycle · 41 pump overrun after CH (~3 min) · 42 system venting (4600) · 44 end of DHW on the heat pump (~3 min) · 45 end of DHW (~1 min) · 61 DHW on the heat pump · 62 DHW on the gas boiler (Combo) · 64 DHW with the electric heater. Codes were observed on fw 6.0. On fw 4.3, plain DHW was reported as 61.
 
 ## 🔎 Unknown registers — contributions welcome!
 
 Still unidentified:
-- **Writable 0/1:** `2102, 4449, 4600` (all 0).
+- **Writable 0/1:** `2102` (0; a written 1 falls back to 0 within seconds with no visible effect).
 - **Always zero:** `512, 3061, 4588, 6014, 6503, 6504` (512, 3061 and 6504 moved once in June, possibly in cooling).
 
 If you can correlate any of these with operating states, **please open an issue or PR**.

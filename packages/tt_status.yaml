@@ -135,6 +135,7 @@ text_sensor:
       if (v == 322) return {"${t_tt_d97_322}"};
       if (v == 342) return {"${t_tt_d97_342}"};
       if (v == 336) return {"${t_tt_d97_336}"};
+      if (v == 351) return {"${t_tt_d97_351}"};
       return {std::string("${t_tt_unknown_raw}") + std::to_string(v)};
 
   - platform: template
@@ -153,6 +154,7 @@ text_sensor:
       if (v == 232) return {"${t_tt_d98_232}"};
       if (v == 252) return {"${t_tt_d98_252}"};
       if (v == 236) return {"${t_tt_d98_236}"};
+      if (v == 251) return {"${t_tt_d98_251}"};
       return {std::string("${t_tt_unknown_raw}") + std::to_string(v)};
 
   - platform: template
@@ -172,6 +174,7 @@ text_sensor:
       if (v == 7) return {"${t_tt_d99_7}"};
       if (v == 8) return {"${t_tt_d99_8}"};
       if (v == 41) return {"${t_tt_d99_41}"};
+      if (v == 42) return {"${t_tt_d99_42}"};
       if (v == 44) return {"${t_tt_d99_44}"};
       if (v == 45) return {"${t_tt_d99_45}"};
       if (v == 61) return {"${t_tt_d99_61}"};

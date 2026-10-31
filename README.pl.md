@@ -134,6 +134,7 @@ Urządzenie nie raportuje zużycia gazu, więc `tt_gas.yaml` liczy czas pracy ko
 | 4451 | I05 | Tryb aktywacji integracji (0 = AU automatyczny, 1 = MA ręczny) | RW |
 | 4453 | I02 | Włączenie integracji systemu (CO) (1 = AL, 0 = OFF) | 0/1, RW |
 | 4454 | I01 | Włączenie integracji CWU (1 = AL, 0 = OFF) | 0/1, RW |
+| 4449 | — | **Wymuszenie grzania kotłem**: 1 = pompa ciepła zatrzymana, grzeje kocioł (D99 7, D97 351, D98 251) | 0/1, RW |
 | 4452 | I10 | Temperatura aktywacji integracji instalacji (CO) | °C jako bajt ze znakiem w młodszym bajcie (251 = −5 °C), RW |
 | 4455 | I09 | Temperatura aktywacji integracji CWU | °C jako bajt ze znakiem w młodszym bajcie (251 = −5 °C), RW |
 | 4468 | I04 | Maksymalny czas oczekiwania CO | min, RW |
@@ -146,6 +147,7 @@ Urządzenie nie raportuje zużycia gazu, więc `tt_gas.yaml` liczy czas pracy ko
 | 4585 | D72 | **Temperatura sprężarki** (góra, = NASA 0x8280) | ×0,1°C |
 | 4586 | — | **Stopień mocy sprężarki** 0–6 (25 Hz = 1, 30 = 2, 43 = 3, 51 = 4, 58 = 5, 61 = 6) | stopień |
 | 4587 | D76 | Obroty wentylatora jednostki zewnętrznej (kandydat) | obr/min |
+| 4600 | — | **Uruchomienie odpowietrzania instalacji** od razu (E139, D99 42, panel „AP99”); 0 przerywa | 0/1, RW |
 | 6000 | T05 | Minutnik włączeń CO | RW |
 | 6002 | T07 | Opóźnienie żądania z termostatu pokojowego (TA): 0-24 = 0-240 s co 10 s (wartość z panelu) | ×10 s, RW |
 | 6010 | A03 | Minimalna prędkość pompy obiegowej | %, RW |
@@ -160,14 +162,14 @@ Urządzenie nie raportuje zużycia gazu, więc `tt_gas.yaml` liczy czas pracy ko
 
 Wszystkie ustawienia RW w wierszach 44xx/60xx zostały zweryfikowane w obie strony: zmiana na klawiaturze przesuwa rejestr, a zapis z Home Assistanta zmienia wartość na jednostce.
 
-**Żądanie pompy ciepła D97:** 300 standby · 332/390 grzanie · 352 grzanie (żądanie termostatu) · 322 CWU na pompie ciepła (fw 4.3) · 342 żądanie chłodzenia · 336 wykluczona przez próg I10 (grzeje kocioł).
-**Żądanie generatora cieplnego D98:** 200 standby · 215 grzanie kotłem (cykl) · 232 grzanie · 252 grzanie (żądanie termostatu, kocioł nie pali) · 236 grzanie tylko kotłem.
-**Stan systemu D99:** 0 / 82 standby · 1 żądanie chłodzenia · 6 żądanie grzania · 7 grzanie tylko kotłem (pompa ciepła wykluczona przez I10) · 8 cykl grzania · 41 dobieg pompy po CO (~3 min) · 44 koniec CWU na pompie ciepła (~3 min) · 45 koniec CWU (~1 min) · 61 CWU na pompie ciepła · 62 CWU na kotle gazowym (Combo) · 64 CWU grzałką elektryczną. Kody zaobserwowane na fw 6.0. Na fw 4.3 zwykłe CWU było raportowane jako 61.
+**Żądanie pompy ciepła D97:** 300 standby · 332/390 grzanie · 352 grzanie (żądanie termostatu) · 322 CWU na pompie ciepła (fw 4.3) · 342 żądanie chłodzenia · 336 wykluczona przez próg I10 (grzeje kocioł) · 351 zatrzymana przez BMS (4449, grzeje kocioł).
+**Żądanie generatora cieplnego D98:** 200 standby · 215 grzanie kotłem (cykl) · 232 grzanie · 252 grzanie (żądanie termostatu, kocioł nie pali) · 236 grzanie tylko kotłem · 251 grzanie kotłem wymuszone przez BMS (4449).
+**Stan systemu D99:** 0 / 82 standby · 1 żądanie chłodzenia · 6 żądanie grzania · 7 grzanie tylko kotłem (pompa ciepła wykluczona przez I10) · 8 cykl grzania · 41 dobieg pompy po CO (~3 min) · 42 odpowietrzanie instalacji (4600) · 44 koniec CWU na pompie ciepła (~3 min) · 45 koniec CWU (~1 min) · 61 CWU na pompie ciepła · 62 CWU na kotle gazowym (Combo) · 64 CWU grzałką elektryczną. Kody zaobserwowane na fw 6.0. Na fw 4.3 zwykłe CWU było raportowane jako 61.
 
 ## 🔎 Nieznane rejestry — pomoc mile widziana!
 
 Wciąż nierozpoznane:
-- **Zapisywalne 0/1:** `2102, 4449, 4600` (wszystkie 0).
+- **Zapisywalne 0/1:** `2102` (0; zapisana 1 wraca do 0 po kilku sekundach bez widocznego skutku).
 - **Zawsze zero:** `512, 3061, 4588, 6014, 6503, 6504` (512, 3061 i 6504 poruszyły się raz w czerwcu, może podczas chłodzenia).
 
 Jeśli potrafisz skojarzyć którykolwiek z nich ze stanem pracy, **załóż issue albo PR**.

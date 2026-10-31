@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.7.0
+
+- **Decoded 4449 = force boiler heating** (tested by writing it from HA on a Magis Combo 9 Plus V2, fw 6.0): with 1 the
+  heat pump stops within ~20 s and after ~3.5 min the boiler heats (D99 7, new codes D97 351 / D98 251). Back to 0, the
+  unit returns to heat pump mode after ~45 s; the compressor restarts after its protection delay (~14 min in the test).
+- **Decoded 4600 = start system venting:** 1 starts the venting at once (E139 "venting in progress", new code D99 42,
+  the panel shows "AP99"); 0 stops it at once.
+- **New controls:** switch `Force boiler heating` in `tt_integration.yaml` and switch `Start system venting` in
+  `tt_installer.yaml`. They replace `Register 4449 (RW 0-1)` and `Register 4600 (RW 0-1)` - delete those in HA.
+- **Status texts:** D97 351, D98 251, D99 42.
+- `Register 2102 (RW 0-1)` stays in diagnostics: a written 1 falls back to 0 within seconds, no visible effect.
+
 ## v2.6.1
 
 - **Fix I09** (register 4455, DHW integration activation temperature): like I10, the unit stores it as a signed byte

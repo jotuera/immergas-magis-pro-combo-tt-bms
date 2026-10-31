@@ -1,9 +1,21 @@
 # Immergas Magis Pro / Combo T-/T+ BMS - package "tt_installer"
-# Installer parameters: P15 anti-legionella, A12 venting, A03/A04 pump speed, T04, T05, T07.
+# Installer parameters: P15 anti-legionella, A12 venting, venting start (4600), A03/A04 pump speed, T04, T05, T07.
 # Part of jotuera/immergas-magis-pro-combo-tt-bms (MIT). Loaded by the main YAML through `packages:`.
 # File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
 
 switch:
+  # 4600 - start the system venting now: E139 "venting in progress", D99 42, the panel shows "AP99" and the unit
+  # does not heat. Switching it off stops the venting at once. (A12 = 6013 is the automatic venting at power-up.)
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_venting_start}"
+    id: tt_venting_start
+    icon: mdi:pipe-valve
+    register_type: holding
+    address: 4600
+    bitmask: 1
+    entity_category: config
+
   # Installer settings confirmed by changing them on the unit and writing them back from HA.
   - platform: modbus_controller
     modbus_controller_id: tt_bms

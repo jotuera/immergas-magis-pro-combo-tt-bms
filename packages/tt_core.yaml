@@ -4,7 +4,7 @@
 # File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
 
 substitutions:
-  tt_project_version: "2.6.1"
+  tt_project_version: "2.7.0"
   # First part of every entity name ("<prefix> - <name>"). Change it when several Immergas buses share one device,
   # e.g. tt_name_prefix: "Immergas TT" -> "Immergas TT - D20 ...". Default keeps the names of v2.1.x.
   tt_name_prefix: "Immergas"

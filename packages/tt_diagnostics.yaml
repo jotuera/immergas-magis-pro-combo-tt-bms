@@ -67,29 +67,12 @@ sensor:
     accuracy_decimals: 0
 
 switch:
+  # 2102 - writable, but a 1 falls back to 0 within seconds and nothing visible happens (maybe a one-shot command).
   - platform: modbus_controller
     modbus_controller_id: tt_bms
     name: "${n_tt_sw_2102}"
     id: tt_sw_2102
     register_type: holding
     address: 2102
-    bitmask: 1
-    entity_category: config
-
-  - platform: modbus_controller
-    modbus_controller_id: tt_bms
-    name: "${n_tt_sw_4449}"
-    id: tt_sw_4449
-    register_type: holding
-    address: 4449
-    bitmask: 1
-    entity_category: config
-
-  - platform: modbus_controller
-    modbus_controller_id: tt_bms
-    name: "${n_tt_sw_4600}"
-    id: tt_sw_4600
-    register_type: holding
-    address: 4600
     bitmask: 1
     entity_category: config

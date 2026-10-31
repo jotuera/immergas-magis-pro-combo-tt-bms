@@ -4,6 +4,18 @@
 # File and id names start with tt_ so this repo can be combined with the D+/D- and F1/F2 repos on one device.
 
 switch:
+  # 4449 - force heating with the boiler: the heat pump stops within ~20 s and after ~3.5 min the boiler heats
+  # (D99 7, D97 351, D98 251). Back to 0: heat pump mode again after ~45 s (the compressor restarts after its
+  # protection delay, ~14 min in the test). "Heat pump excluded" (3027) stays 0 - a different mechanism than I10.
+  - platform: modbus_controller
+    modbus_controller_id: tt_bms
+    name: "${n_tt_force_boiler}"
+    id: tt_force_boiler
+    icon: mdi:fire
+    register_type: holding
+    address: 4449
+    bitmask: 1
+
   - platform: modbus_controller
     modbus_controller_id: tt_bms
     name: "${n_tt_sw_4454}"
